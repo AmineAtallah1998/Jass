@@ -36,7 +36,7 @@ public final class Card {
         private static final List<Rank> ALL =Collections.unmodifiableList(Arrays.asList(values()));
         private static final int COUNT = 9;
         
-         int trumpOrdinal() {
+       public   int trumpOrdinal() {
             switch(this) {
             
             case SIX: return 0;
