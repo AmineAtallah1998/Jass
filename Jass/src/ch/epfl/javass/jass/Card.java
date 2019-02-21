@@ -5,13 +5,21 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import ch.epfl.javass.bits.Bits32;
+
 public final class Card {
+    
+    private Card(int c ) {
+        pkCard=c;
+    } 
+    
+    private final int pkCard;
     
     public enum Color{
         SPADE , HEART , DIAMOND , CLUB;
         
-        private static final List<Color> ALL =Collections.unmodifiableList(Arrays.asList(values()));
-        private static final int COUNT =4;
+         public static final List<Color> ALL =Collections.unmodifiableList(Arrays.asList(values()));
+         public static final int COUNT =4;
         
         @Override
         public String toString() {
@@ -33,10 +41,10 @@ public final class Card {
     public enum Rank {
         SIX , SEVEN , EIGHT , NINE ,TEN , JACK , QUEEN , KING , ACE;
         
-        private static final List<Rank> ALL =Collections.unmodifiableList(Arrays.asList(values()));
-        private static final int COUNT = 9;
+        public static final List<Rank> ALL =Collections.unmodifiableList(Arrays.asList(values()));
+        public static final int COUNT = 9;
         
-       public   int trumpOrdinal() {
+       public int trumpOrdinal() {
             switch(this) {
             
             case SIX: return 0;
@@ -75,5 +83,65 @@ public final class Card {
          }
         
     }
+    
+    public static Card of(Color c, Rank r) {
+        
+        Card card = new Card(PackedCard.pack(c, r));
+       
+        return card;
+    
+    }
+    
+    public static Card ofPacked(int packed) {
+       if(!PackedCard.isValid(packed)) {
+           throw new IllegalArgumentException();
+       }
+       
+       return new Card(packed);
+       
+        
+    }
+    
+    public int packed() {
+        return pkCard;
+    }
+    
+    public Color color() {
+        return PackedCard.color(pkCard);
+    }
+    
+    public Rank rank() {
+        return PackedCard.rank(pkCard);
+    }
+    
+    public boolean isBetter(Color trump, Card that) {
+        return PackedCard.isBetter(trump, pkCard, that.pkCard);
+    }
+    
+    public int points(Color trump) {
+        return PackedCard.points(trump, pkCard);
+    }
+    
+    public boolean equals(Object thatO) {
+        if(!(thatO instanceof Card)) {
+            return false;
+        }
+        return ((Card)thatO).pkCard == this.pkCard;
+    }
+    
+    public int hashCode() {
+        return packed();
+    }
+    
+    public String toString() {
+        return PackedCard.toString(pkCard);
+    }
+    
+    
+    
+    
+    
+    
+    
 
 }

@@ -3,6 +3,8 @@
  */
 package ch.epfl.javass.bits;
 
+import ch.epfl.javass.Preconditions;
+
 /**
  * @author Mohamed Ali
  *
@@ -10,20 +12,18 @@ package ch.epfl.javass.bits;
 public final class Bits32 {
     private Bits32() {    };
     private static boolean validPlage(int start, int size) {
-        return ((start >= 0) && (size >= 1) && (start + size < Integer.SIZE));
+        return ((start >= 0) && (size >= 0) && (start + size < Integer.SIZE));
     }
     
     public static int mask(int start, int size)
             throws IllegalArgumentException {
-        if (!validPlage(start, size)) {
-            throw new IllegalArgumentException();
-        }
+        Preconditions.checkArgument(validPlage(start, size));
+
         return ((1<<size) -1)<<start;
     }
     public static int extract(int bits, int start, int size) throws IllegalArgumentException 
-    {   if (!validPlage(start, size)) {
-            throw new IllegalArgumentException();
-        }
+    {  
+    Preconditions.checkArgument(validPlage(start, size));
        return (bits>>>(start)) & ((1<<size)-1);
     }
     private static int sizeBin (int a )
@@ -36,10 +36,8 @@ public final class Bits32 {
     }
     
     public static int pack (int v1,int s1, int v2,int s2) throws IllegalArgumentException 
-    { if (!(checkPack(v1,s1)&&checkPack(v2,s2)))
-        {
-          throw new IllegalArgumentException() ;
-        }
+    {  Preconditions.checkArgument(checkPack(v1,s1)&&checkPack(v2,s2));
+        
      return (v2<<s1) |v1;
     }
     

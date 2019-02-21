@@ -13,17 +13,20 @@ public final class PackedCard {
     public static boolean isValid(int pkCard) {
         
         
-        return Bits32.extract(pkCard, 0, 3)<=8;
+        return Bits32.extract(pkCard, 0, 3)<=8 && Bits32.extract(pkCard , 4, 31)==0 ; //Changed Smth
+
         
     }
     
     public static int pack(Card.Color c, Card.Rank r) {
         
-        return Bits32.pack ( r.trumpOrdinal(),4,c.ordinal(),2);
+        return Bits32.pack ( r.ordinal(),4,c.ordinal(),2);  //Changed smth
     }
     
     public static Card.Color color(int pkCard){
-        return Color.values()[Bits32.extract(pkCard,4,2)];
+        assert isValid(pkCard);
+        
+        return Color.values()[Bits32.extract(pkCard,4,2)];   //See more about values
     }
     
     public static Card.Rank rank(int pkCard){
@@ -32,17 +35,32 @@ public final class PackedCard {
     }
     
     public static boolean isBetter(Card.Color trump, int pkCardL, int pkCardR) {
+        if( (color(pkCardL) != color(pkCardR)) && ((color(pkCardL)== trump) || (color(pkCardR)== trump)) ) {
+            return color(pkCardL)== trump; 
+        }
         
-        return true;
+        if(color(pkCardL)==color(pkCardR)) {
+            if(color(pkCardL)==trump) {
+                return (rank(pkCardL).trumpOrdinal()>rank(pkCardR).trumpOrdinal());
+            }else {
+                return (rank(pkCardL).ordinal()>rank(pkCardR).ordinal());
+            }
+        }
+        
+        return false;
+       
+        
     }
     
     public static int points(Card.Color trump, int pkCard) {
         
-        return 0;
+       if(color(pkCard)==trump) return rank(pkCard).trumpOrdinal();
+       
+       return rank(pkCard).ordinal();
     }
     
     public static String toString(int pkCard) {
         
-        return null;
+        return "cette carte est de couleur "+color(pkCard).toString()+" et de rang "+rank(pkCard).toString();
     }
 }
