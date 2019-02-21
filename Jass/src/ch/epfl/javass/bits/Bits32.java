@@ -9,8 +9,52 @@ package ch.epfl.javass.bits;
  */
 public final class Bits32 {
     private Bits32() {    };
-
     private static boolean validPlage(int start, int size) {
+        return ((start >= 0) && (size >= 1) && (start + size < Integer.SIZE));
+    }
+    
+    public static int mask(int start, int size)
+            throws IllegalArgumentException {
+        if (!validPlage(start, size)) {
+            throw new IllegalArgumentException();
+        }
+        return ((1<<size) -1)<<start;
+    }
+    public static int extract(int bits, int start, int size) throws IllegalArgumentException 
+    {   if (!validPlage(start, size)) {
+            throw new IllegalArgumentException();
+        }
+       return (bits>>>(start)) & ((1<<size)-1);
+    }
+    private static int sizeBin (int a )
+    {  
+        return (int) (Math.floor( ( Math.log(a)/Math.log(2))) +1);
+    }
+    private static boolean  checkPack(int v,int s)
+    {
+        return (s>=1)&& (s<=31)&& (sizeBin(v)<=s);
+    }
+    
+    public static int pack (int v1,int s1, int v2,int s2) throws IllegalArgumentException 
+    { if (!(checkPack(v1,s1)&&checkPack(v2,s2)))
+        {
+          throw new IllegalArgumentException() ;
+        }
+     return (v2<<s1) |v1;
+    }
+    
+    public static int pack (int v1,int s1, int v2,int s2,int v3, int s3) 
+    {
+     return pack (pack( v1, s1,  v2, s2),s2+s1,  v3, s3);
+    }
+    public static int pack (int v1,int s1, int v2,int s2,int v3, int s3,int s4, int v4, int s5, int v5 , int s6, int v6 , int s7, int v7) 
+    {
+        return pack ( pack ( v1, s1,  v2, s2,v3,s3) , s2+s1+s3, pack (v4,s4,v5,s5,v6,s6), v4+v5+v6, s7,v7);
+       }
+}
+    
+
+   /* private static boolean validPlage(int start, int size) {
         return ((start >= 0) && (size >= 1) && (start + size < Integer.SIZE));
     }
 
@@ -97,7 +141,7 @@ public final class Bits32 {
     {
         return pack ( pack ( v1, s1,  v2, s2,v3,s3) , s2+s1+s3, pack (v4,s4,v5,s5,v6,s6), v4+v5+v6, s7,v7);
        }
-
+*/
   
-}
+
 
