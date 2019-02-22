@@ -6,9 +6,9 @@ import java.util.List;
 
 import ch.epfl.javass.jass.TeamId;
 
-public enum  PlayedId {
+public enum  PlayerId {
     PLAYER_1, PLAYER_2,    PLAYER_3,    PLAYER_4;
-    public static final List<PlayedId> ALL =Collections.unmodifiableList(Arrays.asList(values()));
+    public static final List<PlayerId> ALL =Collections.unmodifiableList(Arrays.asList(values()));
     public static final int COUNT =4;
     public TeamId team() {
         switch (this)

@@ -53,7 +53,7 @@ public final class PackedCard {
     }
     
     public static int points(Card.Color trump, int pkCard) {
-        //return rank(pkCard).trumpOrdinal();
+       
         
        if(color(pkCard)==trump) {
            switch(rank(pkCard).trumpOrdinal()) {
@@ -84,10 +84,6 @@ public final class PackedCard {
        
        }
        return 11;
-       
-      
-       
-       
        
     }
     
