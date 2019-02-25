@@ -8,7 +8,7 @@ public final class Bits64 {
     }
 
     private static boolean validPlage(long start, long size) {
-        return ((start >= 0) && (size >= 0) && (start + size <= Integer.SIZE));
+        return ((start >= 0) && (size >= 0) && (start + size <= Long.SIZE));
     }
 
     public static long mask(long start, long size){
@@ -32,7 +32,7 @@ public final class Bits64 {
 
     public static long pack(long v1, int s1, long v2, int s2){
         
-        Preconditions.checkArgument( checkPack (v1,s1)&& checkPack(v2,s2) && s1+s2<=Integer.SIZE );
+        Preconditions.checkArgument( checkPack (v1,s1)&& checkPack(v2,s2) && s1+s2<=Long.SIZE );
         return (v2 << s1) | v1;
     }
 }
