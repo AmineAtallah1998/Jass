@@ -89,6 +89,6 @@ public final class PackedCard {
     
     public static String toString(int pkCard) {
         
-        return "cette carte est de couleur "+color(pkCard).toString()+" et de rang "+rank(pkCard).toString();
+        return color(pkCard).toString()+rank(pkCard).toString();
     }
 }

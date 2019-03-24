@@ -20,7 +20,7 @@ public final class Score {
     }
     
     public long packed() {
-        return PackedScore.nextTurn(pkScore);
+        return pkScore;
     }
     
     public int turnTricks(TeamId t) {
@@ -72,3 +72,5 @@ public final class Score {
     
 
 }
+
+

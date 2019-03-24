@@ -1,4 +1,4 @@
-package ch.epfl.javass.bits;
+package ch.epfl.javass.jass;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -16,9 +16,11 @@ public enum  PlayerId {
         case PLAYER_1 : return TeamId.TEAM_1;
         case PLAYER_2 : return TeamId.TEAM_2;
         case PLAYER_3 :return TeamId.TEAM_1;
-        default : return TeamId.TEAM_2;
+        default : return TeamId.TEAM_2 ;
         }
         
     }
     
 }
+
+

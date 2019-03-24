@@ -7,15 +7,15 @@ public final class Bits64 {
     private Bits64() {
     }
 
-    private static boolean validPlage(long start, long size) {
+    private static boolean validPlage(int start, int size) {
         return ((start >= 0) && (size >= 0) && (start + size <= Long.SIZE));
     }
 
-    public static long mask(long start, long size){
+    public static long mask(int start, int size){
         Preconditions.checkArgument(validPlage(start, size));
 
         if(size==Long.SIZE) return -1L;
-        return ((1L << size) - 1L) << start;       // 1 en 1L
+        return ((1L << size) - 1L) << start;     
     }
 
     public static long extract(long bits, int start, int size){
@@ -36,3 +36,5 @@ public final class Bits64 {
         return (v2 << s1) | v1;
     }
 }
+
+
