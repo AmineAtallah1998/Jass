@@ -16,7 +16,6 @@ public final class JassGame {
     private final Map<PlayerId, Player> players;
     private final Map<PlayerId, String> playerNames;
     private final Random shuffleRng, trumpRng;
-
     private Map<PlayerId, CardSet> hands = new HashMap<>();
     private List<Card> deck = deck();
     private TurnState tour;
@@ -43,49 +42,50 @@ public final class JassGame {
                 firstPlayerOfGame());
         Set<Map.Entry<PlayerId, Player>> vu = players.entrySet();
         for (Map.Entry<PlayerId, Player> e : vu) {
-            e.getValue().setPlayers(PlayerId.PLAYER_1, playerNames);
+            e.getValue().setPlayers(e.getKey(), playerNames);
         }
 
     }
 
-    private void afficheTrump() {
-     
-            Set<Map.Entry<PlayerId, Player>> vu = players.entrySet();
-            for (Map.Entry<PlayerId, Player> e : vu) {
-                e.getValue().setTrump(tour.trick().trump());
-                break;
-            }
-       
+    private void updateTrump() {
+
+        Set<Map.Entry<PlayerId, Player>> vu = players.entrySet();
+        for (Map.Entry<PlayerId, Player> e : vu) {
+            e.getValue().setTrump(tour.trick().trump());
+
+        }
+
     }
-    private void affichePli() {
+
+    private void updatePli() {
         Set<Map.Entry<PlayerId, Player>> vu = players.entrySet();
         for (Map.Entry<PlayerId, Player> e : vu) {
             e.getValue().updateTrick(tour.trick());
-            break;
+
         }
     }
 
-    private void afficheMain() {
+    private void updateMain() {
         Set<Map.Entry<PlayerId, Player>> vu = players.entrySet();
         for (Map.Entry<PlayerId, Player> e : vu) {
-            e.getValue().updateHand(hands.get(PlayerId.PLAYER_1));
-            break;
+            e.getValue().updateHand(hands.get(e.getKey()));
+
         }
     }
 
-    private void afficheScore() {
+    private void updateScore() {
         Set<Map.Entry<PlayerId, Player>> vu = players.entrySet();
         for (Map.Entry<PlayerId, Player> e : vu) {
             e.getValue().updateScore(tour.score());
-            break;
+
         }
     }
-    
-    private void afficheWinningTeam() {
+
+    private void updateWinningTeam() {
         Set<Map.Entry<PlayerId, Player>> vu = players.entrySet();
         for (Map.Entry<PlayerId, Player> e : vu) {
             e.getValue().setWinningTeam(winningTeam);
-            break;
+
         }
     }
 
@@ -96,10 +96,10 @@ public final class JassGame {
         CardSet hand = hands.get(player);
         Card playedCard = p.cardToPlay(tour, hand);
         tour = tour.withNewCardPlayed(playedCard);
-        affichePli();
-        
+        updatePli();
         hands.put(player, hand.remove(playedCard));
         hand = hands.get(player);
+        updateMain();
         PlayerId playerWillPlay;
         for (int i = 0; i < 3; i++) {
             playerWillPlay = tour.nextPlayer();
@@ -107,11 +107,12 @@ public final class JassGame {
             hand = hands.get(playerWillPlay);
             playedCard = p.cardToPlay(tour, hand);
             tour = tour.withNewCardPlayed(playedCard);
-            affichePli();
+            updatePli();
             hand = hand.remove(playedCard);
             hands.put(playerWillPlay, hand.remove(playedCard));
             hand = hands.get(player);
-           
+            updateMain();
+
         }
 
         winningPlayer = tour.trick().winningPlayer();
@@ -121,7 +122,8 @@ public final class JassGame {
     private PlayerId firstPlayerinTrick() {
 
         if (firstPli) {
-            return PlayerId.values()[(firstPlayerOfTheTurn.ordinal() + nbTurn)% 4];
+            return PlayerId.values()[(firstPlayerOfTheTurn.ordinal() + nbTurn)
+                    % 4];
         }
 
         return winningPlayer;
@@ -132,7 +134,7 @@ public final class JassGame {
         for (Map.Entry<PlayerId, Player> e : vue) {
             if (PackedScore.totalPoints(tour.packedScore(),
                     e.getKey().team()) >= Jass.WINNING_POINTS) {
-                winningTeam=e.getKey().team();
+                winningTeam = e.getKey().team();
                 return true;
             }
         }
@@ -180,13 +182,14 @@ public final class JassGame {
     public void advanceToEndOfNextTrick() {
 
         if (!isGameOver()) {
-           
+
             if (firstPli && firstTrickInGame) {
-                System.out.println( "ce pli a ete commencé par " + firstPlayerinTrick());
-                afficheTrump();
-                affichePli();
-                afficheScore();
-                afficheMain();
+                System.out.println(
+                        "ce pli a ete commencé par " + firstPlayerinTrick());
+                updateTrump();
+                updatePli();
+                updateScore();
+                updateMain();
                 PlaysATrick(firstPlayerOfTheTurn);
                 firstPli = false;
                 firstTrickInGame = false;
@@ -201,18 +204,19 @@ public final class JassGame {
                     DealsTheCard();
                     tour = TurnState.initial(trumpChoose(),
                             tour.score().nextTurn(), firstPlayerinTrick());
-                    
+
                     if (isGameOver()) {
                         System.out.println(
-                                "NOUS AVONS UNE EQUIPE GAGNANTE AVEC LES SCORES: "
-                                        + tour.score());
-                        afficheWinningTeam();
+                                "NOUS AVONS UNE EQUIPE GAGNANTE AVEC LES SCORES: ");
+                        updateScore();
+                        updateWinningTeam();
                     } else {
-                        System.out.println( "ce pli a ete commencé par " + firstPlayerinTrick());
-                        afficheTrump();
-                        affichePli();
-                        afficheScore();
-                        afficheMain();
+                        System.out.println("ce pli a ete commencé par "
+                                + firstPlayerinTrick());
+                        updateTrump();
+                        updatePli();
+                        updateScore();
+
                         PlaysATrick(firstPlayerinTrick());
                         firstPli = false;
                     }
@@ -220,16 +224,16 @@ public final class JassGame {
                     tour = tour.withTrickCollected();
                     if (isGameOver()) {
                         System.out.println(
-                                "NOUS AVONS UNE EQUIPE GAGNANTE AVEC LES SCORES: "
-                                        + tour.score());
-                        afficheWinningTeam();
-                    }else {
-                    System.out.println("On commence un nouveau pli");
-                    System.out.println( "ce pli a ete commencé par " + firstPlayerinTrick());
-                    affichePli();
-                    afficheScore();
-                    afficheMain();
-                    PlaysATrick(firstPlayerinTrick());
+                                "NOUS AVONS UNE EQUIPE GAGNANTE AVEC LES SCORES: ");
+                        updateScore();
+                        updateWinningTeam();
+                    } else {
+                        System.out.println("On commence un nouveau pli");
+                        System.out.println("ce pli a ete commencé par "
+                                + firstPlayerinTrick());
+                        updatePli();
+                        updateScore();
+                        PlaysATrick(firstPlayerinTrick());
                     }
                 }
             }

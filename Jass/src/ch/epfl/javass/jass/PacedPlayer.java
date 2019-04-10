@@ -19,14 +19,14 @@ public final class PacedPlayer implements Player {
     public Card cardToPlay(TurnState state, CardSet hand) {
         
            long current=  System.currentTimeMillis();
-       
            Card card =underlyingPlayer.cardToPlay(state, hand);
-           long after =  System.currentTimeMillis();
-           if (minTime-(after-current)>0) {
+           long duration =  System.currentTimeMillis()-current;
+           if ((minTime*1000)-duration>0) { 
            try {
-               Thread.sleep((long)(minTime- (after-current)));
+               Thread.sleep((long)((minTime*1000)-duration));
              } catch (InterruptedException e) { /* ignore */ } 
            }
+           
            return card;
     }
     
