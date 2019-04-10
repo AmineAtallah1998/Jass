@@ -2,8 +2,11 @@ package ch.epfl.javass.jass;
 
 import java.util.SplittableRandom;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+
 import ch.epfl.javass.Preconditions;
 
 
@@ -35,6 +38,8 @@ public final class MctsPlayer implements Player {
         private PlayerId ownId;
         private SplittableRandom seed;
         private List<Node> path = new ArrayList<>(); // alias path
+        
+        private CardSet nonPlayedChildren;
 
         public Node(TurnState turnStateNode, CardSet hand, PlayerId ownId,
                 SplittableRandom seed) {
@@ -44,12 +49,13 @@ public final class MctsPlayer implements Player {
             nextPlayableCards = this.playableCards(turnStateNode, hand);
             childrenNode = new ArrayList<>();
             this.hand = hand;
+            nonPlayedChildren= this.playableCards(turnStateNode, hand);
         }
 
         @Override
         public String toString() {
             String res = turnStateNode.trick().toString() + "Ceci est le pli  "
-                    + Double.toString(getSn()) + "Sn   " + Double.toString(Nn)
+                    + Float.toString(getSn()) + "Sn   " + Integer.toString(Nn)
                     + "Nn";
             return res;
         }
@@ -122,7 +128,7 @@ public final class MctsPlayer implements Player {
             return childrenNode.get(maxIndice);
         }
 
-        // Appel forcément par le parent
+        // Appel forcï¿½ment par le parent
         private void setVnOfChildren() {
 
             for (int i = 0; i < this.nextPlayableCards.size(); i++) {
@@ -131,7 +137,7 @@ public final class MctsPlayer implements Player {
                     childNode.setVn(Double.POSITIVE_INFINITY);
                 } else {
                     double toBeSet;
-                    toBeSet = (double) childNode.Sn / (double) childNode.Nn;
+                    toBeSet = ((double) childNode.Sn) / childNode.Nn;
                     toBeSet += c * Math
                             .sqrt(2 * (Math.log(this.getNn())) / childNode.Nn);
 
@@ -141,13 +147,12 @@ public final class MctsPlayer implements Player {
         }
 
         private boolean sature() {
-
             return childrenNode.size() == nextPlayableCards.size();
         }
 
-        // retourne la carte qui a fait gagné le plus de point à l'équipe
+        // retourne la carte qui a fait gagnï¿½ le plus de point ï¿½ l'ï¿½quipe
         private double averageScore() {
-            return (double) Sn / (double) Nn;
+            return ((double) Sn) / Nn;
         }
 
         private Card chosenCard() {
@@ -157,9 +162,8 @@ public final class MctsPlayer implements Player {
 
             Node maxNode = childrenNode.get(0);
 
-            for (int i = 0; i < childrenNode.size(); i++) {
+            for (int i = 1; i < childrenNode.size(); i++) {
                 Node currentNode = childrenNode.get(i);
-
                 if (currentNode.averageScore() > maxNode.averageScore()) {
                     maxNode = currentNode;
                 }
@@ -170,13 +174,15 @@ public final class MctsPlayer implements Player {
             return selectedTrick.card(selectedTrick.size() - 1);
         }
 
-        // appelé par un noeud
-        // retourne une carte jouable possible à partir de ce noeud
+        // appelï¿½ par un noeud
+        // retourne une carte jouable possible ï¿½ partir de ce noeud
         private Card randomCard(TurnState state) {
             if (state.isTerminal())
                 return null;
+            
             TurnState other = TurnState.ofPackedComponents(state.packedScore(),
                     state.packedUnplayedCards(), state.packedTrick());
+            
             int random = seed.nextInt(playableCards(state, hand).size());
             Card randomCard = playableCards(other, hand).get(random);
             return randomCard;
@@ -199,22 +205,23 @@ public final class MctsPlayer implements Player {
             return other.score();
         }
 
-        // appelé par le noeud où la simulation aura lieu
-        // mets à jour les Sn et les Nn
+        // appelï¿½ par le noeud oï¿½ la simulation aura lieu
+        // mets ï¿½ jour les Sn et les Nn
         private void MCSimulation() {
             setSn(getSn() + finalScoreOfTurn(turnStateNode, hand)
                     .turnPoints(ownId.team()));
             setNn(getNn() + 1);
         }
 
-        // appelé par le noeud où on veut ajouter un fils
-        // retour une liste des noeuds parents du plus élevés au plus bas
+        // appelï¿½ par le noeud oï¿½ on veut ajouter un fils
+        // retour une liste des noeuds parents du plus ï¿½levï¿½s au plus bas
         private List<Node> bonEndroit() {
             List<Node> list = new LinkedList<>();
             list.add(this);
 
             if (this.isLeaf()) {
                 return list;
+                
             }
 
             Node theChild;
@@ -222,7 +229,7 @@ public final class MctsPlayer implements Player {
                 return list;
             }
             if (this.sature()) {
-
+            	
                 this.setVnOfChildren();
                 theChild = this.childToExpand();
                 list.addAll(theChild.bonEndroit());
@@ -232,7 +239,7 @@ public final class MctsPlayer implements Player {
             return null;
         }
 
-        // appelé par le noeud où la modification a eu lieu
+        // appelï¿½ par le noeud oï¿½ la modification a eu lieu
         // update tous ses parents
         private void updateScores(List<Node> path) {
 
@@ -242,10 +249,11 @@ public final class MctsPlayer implements Player {
             }
         }
 
-        // appelé par la méthode pù
+       
         private Node addNode() {
-            if (this.isLeaf())
+            if (this.isLeaf()) {
                 return this;
+            }
             TurnState other = TurnState.ofPackedComponents(
                     this.turnStateNode.packedScore(),
                     turnStateNode.packedUnplayedCards(),
@@ -254,8 +262,8 @@ public final class MctsPlayer implements Player {
             Node n;
             TurnState m;
             other = other.trick().isFull() ? other.withTrickCollected() : other;
-           
-            m = other.withNewCardPlayed(randomCard(other));
+            m = other.withNewCardPlayed(nonPlayedChildren.get(0));
+            nonPlayedChildren= nonPlayedChildren.remove(nonPlayedChildren.get(0));
             n = new Node(m, hand, ownId, seed);
             childrenNode.add(n);
 
@@ -288,16 +296,16 @@ public final class MctsPlayer implements Player {
             root.updateScores(root.path);
             s++;
         }
+        
 
         
         while (s < iterations) {
-            bigRoot.setVnOfChildren();
+        	bigRoot.setVnOfChildren();
             root = bigRoot.childToExpand();
-            Node added = root.bonEndroit().get(root.bonEndroit().size() - 1)
-                    .addNode();
+            Node added = root.bonEndroit().get(root.bonEndroit().size() - 1).addNode();
             added.MCSimulation();
             added.updateScores(added.path);
-
+           
             s++;
         }
 
