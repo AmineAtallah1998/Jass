@@ -4,159 +4,216 @@ import java.util.StringJoiner;
 
 import ch.epfl.javass.bits.Bits64;
 
-
+/**
+ * PackedCardSet : ensemble de cartes empaquete
+ * 
+ * @author Mohamed Ali Dhraief (283509)
+ * @author Amine Atallah (284592)
+ *
+ */
 public final class PackedCardSet {
 
-    private PackedCardSet() {
-    }
+	/**
+	 * l'ensemble de cartes empaquete vide
+	 */
+	public static final long EMPTY = 0;
+	/**
+	 * l'ensemble des 36 cartes du jeu de Jass empaquete
+	 */
+	public static final long ALL_CARDS = Bits64.mask(0, 9) | Bits64.mask(16, 9) | Bits64.mask(32, 9)
+			| Bits64.mask(48, 9);
+	// Tableau contenant les valeurs de retours pour la methode trumpAbove (pour une
+	// execution rapide)
+	private final static long[][] tabTrumpAbove = tabTrumpAbove();
+	// Tableau contenant les valeurs de retours pour la methode subsetOfColor (pour
+	// une
+	// execution rapide)
+	private final static long[] tabSubsetOfColor = tabSubsetOfColor();
 
-    public static final long EMPTY = 0;
-    public static final long ALL_CARDS = Bits64.mask(0, 9) | Bits64.mask(16, 9)
-            | Bits64.mask(32, 9) | Bits64.mask(48, 9);
+	// Constructeur privé
+	private PackedCardSet() {
+	}
 
-    public static boolean isValid(long pkCardSet) {
-        return (((pkCardSet & (~ALL_CARDS)) == 0));
-    }
-    /*
-     * retourne l'ensemble des cartes strictement plus fortes que la carte
-     * empaquetée donnée, sachant qu'il s'agit d'une carte d'atout ; par
-     * exemple, appliquée à l'as de cœur, elle doit retourner un ensemble
-     * contenant deux éléments, le neuf et le valet de cœur, car ces deux cartes
-     * sont les seules à être strictement plus fortes que l'as de cœur lorsque
-     * cœur est atout ; attention, cette méthode doit s'exécuter rapidement
-     * (voir les conseils de programmation plus bas)
-     */
+	/**
+	 * @param pkCardSet : ensemble de cartes empaquete
+	 * @return vrai si l'ensemble de carte empaqueté est valide et faux sinon
+	 */
+	public static boolean isValid(long pkCardSet) {
+		return (((pkCardSet & (~ALL_CARDS)) == 0));
+	}
 
-    public static long trumpAbove(int pkCard) {
-        long s = 0L;
-        switch (Card.ofPacked(pkCard).rank()) {
-        case SIX:
-            s = 0b1111_1_1110;
-            break;
-        case SEVEN:
-            s = 0b1111_1_1100;
-            break;
+	/**
+	 * @param pkCard: carte atout à comparer sous forme empaquetée
+	 * @return l'ensemble de cartes atout supérieur à la carte à comparer
+	 */
+	public static long trumpAbove(int pkCard) {
+		return tabTrumpAbove[Card.ofPacked(pkCard).color().ordinal()][Card.ofPacked(pkCard).rank().ordinal()];
+	}
 
-        case EIGHT:
-            s = 0b1111_1_1000;
-            break;
+	/**
+	 * @param pkCard : carte empaquetée
+	 * @return l'ensemble de cartes empaqueté contenant uniquement la carte
+	 *         empaquetée donnée
+	 */
+	public static long singleton(int pkCard) {
+		return (1L << Card.ofPacked(pkCard).rank().ordinal()) << (16 * Card.ofPacked(pkCard).color().ordinal());
+	}
 
-        case NINE:
-            s = 0b0001_0_0000;        
-            break;
+	/**
+	 * @param pkCardSet : l'ensemble de cartes empaqueté
+	 * @return vrai ssi l'ensemble de cartes empaqueté donné est vide et faux sinon
+	 */
+	public static boolean isEmpty(long pkCardSet) {
+		return pkCardSet == EMPTY;
+	}
 
-        case TEN:
-            s = 0b1111_0_1000;
-            break;
+	/**
+	 * @param pkCardSet : l'ensemble de cartes empaqueté
+	 * @return la taille de l'ensemble de cartes empaqueté donné (nombre de cartes)
+	 */
+	public static int size(long pkCardSet) {
+		return Long.bitCount(pkCardSet);
+	}
 
-        case JACK:
-            s = 0b0;
-            break;
+	/**
+	 * @param       pkCardSet: ensemble de cartes empaqueté
+	 * @param index : index donné
+	 * @return la version empaquetée de la carte d'index donné de l'ensemble de
+	 *         cartes empaqueté donné
+	 */
+	public static int get(long pkCardSet, int index) {
 
-        case QUEEN:
-            s = 0b1101_0_1000;
-            break;
+		int pos = Long.numberOfTrailingZeros(pkCardSet);
+		for (int i = 0; i < index; i++) {
+			pkCardSet = pkCardSet & Bits64.mask(pos + 1, 63 - pos);
+			pos = Long.numberOfTrailingZeros(pkCardSet);
+		}
+		int colorOrdinal = pos / 16;
+		int rankOrdinal = pos % 16;
 
-        case KING:
-            s = 0b1001_0_1000; break;
-        default:
-            s = 0b0001_0_1000;
-        }
-        
-        return s << 16*Card.ofPacked(pkCard).color().ordinal();
-    }
-  
+		return PackedCard.pack(Card.Color.values()[colorOrdinal], Card.Rank.values()[rankOrdinal]);
+	}
 
-    // qui retourne l'ensemble de cartes empaqueté contenant uniquement la carte
-    // empaquetée donnée
-    public static long singleton(int pkCard) {
-        
-        return (1L <<Card.ofPacked(pkCard).rank().ordinal()) << (16*Card.ofPacked(pkCard).color().ordinal()) ; 
-             
-            
-    }
+	/**
+	 * @param pkCardSet : ensemble de cartes empaquete
+	 * @param pkCard    : carte empaquetée à ajouter
+	 * @return l'ensemble de cartes données avec pkCard ajoutée
+	 */
+	public static long add(long pkCardSet, int pkCard) {
+		return pkCardSet | singleton(pkCard);
+	}
 
-    // retourne vrai ssi l'ensemble de cartes empaqueté donné est vide,
-    public static boolean isEmpty(long pkCardSet) {
-        return pkCardSet == EMPTY;
-    }
+	/**
+	 * @param pkCardSet : ensemble de cartes empaquete
+	 * @param pkCard    : carte empaqueté donnée
+	 * @return l'ensemble de cartes empaqueté donné après supression de la carte
+	 *         empaquetée donnée
+	 */
+	public static long remove(long pkCardSet, int pkCard) {
+		return pkCardSet & (~singleton(pkCard));
+	}
 
-    // retourne la taille de l'ensemble de cartes empaqueté donné, c-à-d le
-    // nombre de cartes qu'il contient,
-    public static int size(long pkCardSet) {
-        return Long.bitCount(pkCardSet);
-    }
+	/**
+	 * @param pkCardSet : ensemble de cartes empaquete
+	 * @param pkCard    : carte empaquetee donnée
+	 * @return vrai ssi l'ensemble de cartes empaqueté donné contient la carte
+	 *         donnée et faux sinon
+	 */
+	public static boolean contains(long pkCardSet, int pkCard) {
+		return (pkCardSet | singleton(pkCard)) == pkCardSet;
+	}
 
-  
-        
-        public static int get(long pkCardSet, int index) {
-          
-            int pos = Long.numberOfTrailingZeros(pkCardSet);
-            for (int i=0; i<index;i++) {
-                pkCardSet= pkCardSet & 
-                        Bits64.mask(pos+1, 63-pos);
-                pos= Long.numberOfTrailingZeros(pkCardSet);
-            }
-           
-            return PackedCard.pack(
-                    Card.Color.values()[(int)(pos/16)],
-                    Card.Rank.values()[pos%16]);
-         }
-      
-     
-    
-    public static long add(long pkCardSet, int pkCard) {
-        return pkCardSet | singleton(pkCard);  
-    }
+	/**
+	 * @param pkCardSet : ensemble de cartes empaquete
+	 * @return le complément de l'ensemble de cartes empaqueté donné
+	 */
+	public static long complement(long pkCardSet) {
+		return (pkCardSet ^ ALL_CARDS);
+	}
 
-    public static long remove(long pkCardSet, int pkCard) {
+	/**
+	 * @param pkCardSet1 : ensemble de cartes empaquete
+	 * @param pkCardSet2 : ensemble de cartes empaquete
+	 * @return l'union des deux ensembles de cartes empaquetées donnés
+	 */
+	public static long union(long pkCardSet1, long pkCardSet2) {
+		return pkCardSet1 | pkCardSet2;
+	}
 
-        return pkCardSet & (~singleton(pkCard)); 
-    }
+	/**
+	 * @param pkCardSet1 : ensemble de cartes empaquete
+	 * @param pkCardSet2 : ensemble de cartes empaquete
+	 * @return l'intersection des deux ensembles de cartes empaquetées donnés
+	 */
+	public static long intersection(long pkCardSet1, long pkCardSet2) {
+		return pkCardSet1 & pkCardSet2;
+	}
 
-    public static boolean contains(long pkCardSet, int pkCard) {
-        return (pkCardSet | singleton(pkCard)) == pkCardSet;
-    }
+	/**
+	 * @param pkCardSet1 : ensemble de cartes empaquete
+	 * @param pkCardSet2 : ensemble de cartes empaquete
+	 * @return l'ensemble des cartes empaquetées qui se trouvent dans pkCardSet1 et
+	 *         pas dans pkCardSet2
+	 */
+	public static long difference(long pkCardSet1, long pkCardSet2) {
+		return (pkCardSet1 & ~pkCardSet2);
+	}
 
-    public static long complement(long pkCardSet) { 
-       
-        return (pkCardSet ^ ALL_CARDS);
-    }
+	/**
+	 * @param pkCardSet : ensemble de cartes empaquete
+	 * @param color     : couleur donnée
+	 * @return le sous ensemble de pkCardSet de couleur color donnée
+	 */
+	public static long subsetOfColor(long pkCardSet, Card.Color color) {
+		return intersection(tabSubsetOfColor[color.ordinal()], pkCardSet);
+	}
 
-    public static long union(long pkCardSet1, long pkCardSet2) {
-        return pkCardSet1 | pkCardSet2;
-    }
+	/**
+	 * @param pkCardSet : ensemble de cartes empaquete
+	 * @return la représentation textuelle de l'ensemble de cartes empaqueté donné
+	 */
+	public static String toString(long pkCardSet) {
+		StringJoiner j = new StringJoiner(",", "{", "}");
 
-    public static long intersection(long pkCardSet1, long pkCardSet2) {
-        return pkCardSet1 & pkCardSet2;
-    }
+		for (int i = 0; i < size(pkCardSet); i++) {
+			Card c = Card.ofPacked(get(pkCardSet, i));
+			j.add(c.color().toString() + c.rank().toString());
+		}
+		return j.toString();
+	}
 
-    public static long difference(long pkCardSet1, long pkCardSet2) {
-        return (pkCardSet1 & ~pkCardSet2);
-    }
+	// Methode auxiliaire pour remplir l'attribut prive tabTrumpAbove necessaire
+	// pour la
+	// methode trumpAbove
+	private static long[][] tabTrumpAbove() {
+		long[][] tab = new long[4][9];
+		for (int i = 0; i < Card.Color.COUNT; i++) {
+			for (int j = 0; j < Card.Rank.COUNT; j++) {
+				long s = 0L;
+				for (int k = 0; k < Card.Rank.COUNT; k++) {
+					if (Card.Rank.values()[k].trumpOrdinal() > Card.Rank.values()[j].trumpOrdinal()) {
+						s = add(s, PackedCard.pack(Card.Color.values()[i], Card.Rank.values()[k]));
+					}
+				}
+				tab[i][j] = s;
+			}
+		}
+		return tab;
+	}
 
-    public static long subsetOfColor(long pkCardSet, Card.Color color) {
-        return pkCardSet & (Bits64.mask(color.ordinal() * 16, 9));
-    }
-    
-    
-    public static String toString(long pkCardSet) {
-        StringJoiner j = new StringJoiner(",", "{", "}");
-       
-        for (int i=0 ; i<size(pkCardSet) ; i++) {
-           Card c = Card.ofPacked(get(pkCardSet, i)) ;
-           j.add(c.color().toString()+c.rank().toString());
-        }
-        
-        
-        
-        
-        
-            return j.toString();
-    }
-    
- 
-   
+	// Methode auxiliaire pour remplir l'attribut prive tabSubsetOfColor necessaire
+	// pour la
+	// methode subsetOfColor
+	private static long[] tabSubsetOfColor() {
+		long[] tabSubsetOfColor = new long[Card.Color.COUNT];
+		for (int i = 0; i < Card.Color.COUNT; i++) {
+			long s = 0L;
+			for (int j = 0; j < Card.Rank.COUNT; j++) {
+				s = add(s, PackedCard.pack(Card.Color.values()[i], Card.Rank.values()[j]));
+			}
+			tabSubsetOfColor[i] = s;
+		}
+		return tabSubsetOfColor;
+	}
 
 }
-

@@ -2,317 +2,308 @@ package ch.epfl.javass.jass;
 
 import java.util.SplittableRandom;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
-
 import ch.epfl.javass.Preconditions;
 
-
+/**
+ * MctsPlayer : représente un joueur simulé au moyen de l'algorithme MCTS
+ * 
+ * @author Mohamed Ali Dhraief (283509)
+ * @author Amine Atallah (284592)
+ */
 public final class MctsPlayer implements Player {
+	private final PlayerId ownId;
+	private final int iterations;
+	private final SplittableRandom seed;
 
-    private final PlayerId ownId;
-    private final int iterations;
-    private final SplittableRandom seed;
+	/**
+	 * construit un joueur simulé avec l'identité, la graine aléatoire et le nombre
+	 * d'itérations donnés
+	 * 
+	 * @param ownId      : joueur simulé
+	 * @param rngSeed    : graine aleatoire
+	 * @param iterations : nombre d'iterations
+	 * @throws IllegalArgumentException si le nombre d'itérations est inférieur à 9
+	 */
+	public MctsPlayer(PlayerId ownId, long rngSeed, int iterations) {
+		Preconditions.checkArgument(iterations >= 9);
+		this.iterations = iterations;
+		this.ownId = ownId;
+		SplittableRandom rng = new SplittableRandom(rngSeed);
+		this.seed = new SplittableRandom(rng.nextLong());
+	}
 
-    public MctsPlayer(PlayerId ownId, long rngSeed, int iterations) {
-        Preconditions.checkArgument(iterations >= 9);
-        this.iterations = iterations;
-        this.ownId = ownId;
-        SplittableRandom rng = new SplittableRandom(rngSeed);
-        this.seed = new SplittableRandom(rng.nextLong());
-    }
+	/*
+	 * @see ch.epfl.javass.jass.Player#cardToPlay(ch.epfl.javass.jass.TurnState,
+	 * ch.epfl.javass.jass.CardSet)
+	 */
+	@Override
+	public Card cardToPlay(TurnState state, CardSet hand) {
 
-    private static class Node {
-        private TurnState turnStateNode;
-        private List<Node> childrenNode; // list of all the possible Children
+		Node bigRoot = new Node(state, hand, ownId, seed);
+		Node root;
+		int s = 0;
+		while (!bigRoot.sature()) {
+			root = bigRoot.addNode();
+			root.MCSimulation();
+			root.updateScores(root.path);
+			s++;
+		}
 
-        private CardSet nextPlayableCards;
-        private float Sn; // S(n)
-        private int Nn; // N(n)
+		while (s < iterations) {
+			bigRoot.setVnOfChildren();
+			root = bigRoot.childToExpand();
+			Node directFather = root.directFather();
+			Node added = directFather.addNode();
+			added.MCSimulation();
+			added.updateScores(added.path);
 
-        private int c = 40; // constante c
-        private double Vn;
-        private CardSet hand;
-        private PlayerId ownId;
-        private SplittableRandom seed;
-        private List<Node> path = new ArrayList<>(); // alias path
-        
-        private CardSet nonPlayedChildren;
+			s++;
+		}
+		return bigRoot.chosenCard();
+	}
 
-        public Node(TurnState turnStateNode, CardSet hand, PlayerId ownId,
-                SplittableRandom seed) {
-            this.ownId = ownId;
-            this.seed = seed;
-            this.turnStateNode = turnStateNode;
-            nextPlayableCards = this.playableCards(turnStateNode, hand);
-            childrenNode = new ArrayList<>();
-            this.hand = hand;
-            nonPlayedChildren= this.playableCards(turnStateNode, hand);
-        }
+	private static class Node {
+		private TurnState turnStateNode;
+		private List<Node> childrenNode; // liste de tous les noeuds fils
+		private CardSet nextPlayableCards; // ensemble de toutes les cartes jouables
+		private int Sn; // S(n)
+		private int Nn; // N(n)
+		private final int C = 40; // constante c
+		private double Vn; // V(n)
+		private CardSet hand; // main du joueur
+		private PlayerId ownId;
+		private SplittableRandom seed;
+		private List<Node> path = new ArrayList<>();
+		private CardSet nonPlayedChildren;
+		private Score scores; //les scores apres simulation d'un noeud
 
-        @Override
-        public String toString() {
-            String res = turnStateNode.trick().toString() + "Ceci est le pli  "
-                    + Float.toString(getSn()) + "Sn   " + Integer.toString(Nn)
-                    + "Nn";
-            return res;
-        }
+		/**
+		 * construit un noeud
+		 * 
+		 * @param turnStateNode : etat du tour
+		 * @param hand          : main du joueur
+		 * @param ownId         : joueur simulé
+		 * @param seed          : graine aleatoire
+		 * 
+		 */
+		public Node(TurnState turnStateNode, CardSet hand, PlayerId ownId, SplittableRandom seed) {
+			this.ownId = ownId;
+			this.seed = seed;
+			this.turnStateNode = turnStateNode;
+			nextPlayableCards = this.playableCards(turnStateNode, hand);
+			childrenNode = new ArrayList<>();
+			this.hand = hand;
+			nonPlayedChildren = this.playableCards(turnStateNode, hand);
+		}
 
-        private float getSn() {
-            return Sn;
-        }
+		// retourne le joueur qui va jouer à partir du TurnState state
+		private PlayerId nextPlayer(TurnState state) {
+			return state.trick().isFull() ? state.withTrickCollected().nextPlayer() : state.nextPlayer();
+		}
 
-        private void setNn(int a) {
-            this.Nn = a;
-        }
+		/*
+		 * retourne les cartes qui peuvent être joués à partir de state Si le prochain
+		 * joueur est le joueur représenté par Mcts Player (ownId), la méthode retourne
+		 * les cartes pas encore joué qui sont dans hand Sinon, la méthode retourne les
+		 * carte pas dans hand et pas encore jouées
+		 */
+		private CardSet playableCards(TurnState state, CardSet hand) {
 
-        private void setSn(float a) {
-            this.Sn = a;
-        }
+			TurnState other = TurnState.ofPackedComponents(state.packedScore(), state.packedUnplayedCards(),
+					state.packedTrick());
 
-        private int getNn() {
-            return Nn;
-        }
+			if (other.trick().isLast() && other.trick().isFull()) {
+				return null;
+			}
+			PlayerId nextPlayer = nextPlayer(other);
+			other = other.trick().isFull() ? other.withTrickCollected() : other;
+			nextPlayer = nextPlayer(other);
 
-        private double getVn() {
-            return Vn;
-        }
+			if (this.ownId == nextPlayer) {
+				return other.trick().playableCards(other.unplayedCards().intersection(hand));
+			}
+			return other.trick().playableCards(other.unplayedCards().difference(hand));
+			
 
-        private void setVn(double Vn) {
-            this.Vn = Vn;
-        }
+		}
 
-        private PlayerId nextPlayer(TurnState state) {
-            if (!PackedTrick.isValid(state.packedTrick())) {
-                System.out.println(state.trick());
-            }
-            return state.trick().isFull()
-                    ? state.withTrickCollected().nextPlayer()
-                    : state.nextPlayer();
-        }
+		// la méthode retourne le noeud qui a le plus grand Vn
+		private Node childToExpand() {
+			int maxIndice = 0;
+			for (int i = 1; i < childrenNode.size(); i++) {
+				if (childrenNode.get(i).Vn > childrenNode.get(maxIndice).Vn) {
+					maxIndice = i;
+				}
+			}
+			return childrenNode.get(maxIndice);
+		}
 
-        private CardSet playableCards(TurnState state, CardSet hand) {
+		//retourne le noeud pere du noeud appelant
+		private Node directFather() {
+			return this.bonEndroit().get(this.bonEndroit().size() - 1);
+		}
 
-            if (!PackedTrick.isValid(state.packedTrick())) {
-                System.out.println("invalide at first dans Playable Cards");
-            }
-            TurnState other = TurnState.ofPackedComponents(state.packedScore(),
-                    state.packedUnplayedCards(), state.packedTrick());
+		/*
+		 * Appel forcement par le parent mets à jour les Vn des noeuds fils
+		 */
+		private void setVnOfChildren() {
 
-            if (other.trick().isLast() && other.trick().isFull()) {
-                return null;
-            }
-            PlayerId nextPlayer = nextPlayer(other);
+			for (int i = 0; i < this.nextPlayableCards.size(); i++) {
+				Node childNode = childrenNode.get(i);
+				if (childNode.Nn == 0) {
+					childNode.setVn(Double.POSITIVE_INFINITY);
+				} else {
+					double toBeSet;
+					toBeSet = ((double) childNode.Sn) / childNode.Nn;
+					toBeSet += C * Math.sqrt(2 * (Math.log(this.Nn)) / childNode.Nn);
 
-            other = other.trick().isFull() ? other.withTrickCollected() : other;
-            nextPlayer = nextPlayer(other);
+					childNode.setVn(toBeSet);
+				}
+			}
+		}
 
-            if (this.ownId == nextPlayer) {
-                return other.trick().playableCards(
-                        other.unplayedCards().intersection(hand));
-            }
-            return other.trick()
-                    .playableCards(other.unplayedCards().difference(hand));
-        }
+		// retourne vrai ssi tous les noeuds fils ont été crées
+		private boolean sature() {
+			return childrenNode.size() == nextPlayableCards.size();
+		}
 
-        private Node childToExpand() {
-            int maxIndice = 0;
-            for (int i = 1; i < childrenNode.size(); i++) {
-                if (childrenNode.get(i).getVn() > childrenNode.get(maxIndice)
-                        .getVn()) {
-                    maxIndice = i;
-                }
-            }
-            return childrenNode.get(maxIndice);
-        }
+		// retourne la carte qui a fait gagne le plus de point a l'equipe
+		private double averageScore() {
+			return ((double) Sn) / Nn;
+		}
 
-        // Appel forc�ment par le parent
-        private void setVnOfChildren() {
+		// retourne la carte à jouer: la carte qui a fait un meilleur score pour
+		// l'équipe en question
+		private Card chosenCard() {
 
-            for (int i = 0; i < this.nextPlayableCards.size(); i++) {
-                Node childNode = childrenNode.get(i);
-                if (childNode.Nn == 0) {
-                    childNode.setVn(Double.POSITIVE_INFINITY);
-                } else {
-                    double toBeSet;
-                    toBeSet = ((double) childNode.Sn) / childNode.Nn;
-                    toBeSet += c * Math
-                            .sqrt(2 * (Math.log(this.getNn())) / childNode.Nn);
+			if (turnStateNode.isTerminal())
+				return null;
 
-                    childNode.setVn(toBeSet);
-                }
-            }
-        }
+			Node maxNode = childrenNode.get(0);
+			for (int i = 1; i < childrenNode.size(); i++) {
+				Node currentNode = childrenNode.get(i);
+				if (currentNode.averageScore() > maxNode.averageScore()) {
+					maxNode = currentNode;
+				}
 
-        private boolean sature() {
-            return childrenNode.size() == nextPlayableCards.size();
-        }
+			}
+			Trick selectedTrick = maxNode.turnStateNode.trick();
+			return selectedTrick.card(selectedTrick.size() - 1);
+		}
 
-        // retourne la carte qui a fait gagn� le plus de point � l'�quipe
-        private double averageScore() {
-            return ((double) Sn) / Nn;
-        }
+		// appelé par un noeud
+		// retourne une carte jouable possible a partir de ce noeud
+		private Card randomCard(TurnState state) {
+			if (state.isTerminal())
+				return null;
 
-        private Card chosenCard() {
+			TurnState other = TurnState.ofPackedComponents(state.packedScore(), state.packedUnplayedCards(),
+					state.packedTrick());
 
-            if (turnStateNode.isTerminal())
-                return null;
+			int random = seed.nextInt(playableCards(state, hand).size());
+			Card randomCard = playableCards(other, hand).get(random);
+			return randomCard;
+		}
 
-            Node maxNode = childrenNode.get(0);
+		// retourne le score d'une simulation
+		private Score finalScoreOfTurn(TurnState state, CardSet hand) {
+			TurnState other = TurnState.ofPackedComponents(state.packedScore(), state.packedUnplayedCards(),
+					state.packedTrick());
 
-            for (int i = 1; i < childrenNode.size(); i++) {
-                Node currentNode = childrenNode.get(i);
-                if (currentNode.averageScore() > maxNode.averageScore()) {
-                    maxNode = currentNode;
-                }
+			while (!other.isTerminal()) {
+				while (!other.trick().isFull()) {
 
-            }
-            Trick selectedTrick = maxNode.turnStateNode.trick();
+					Card addedCard = randomCard(other);
+					other = other.withNewCardPlayed(addedCard);
 
-            return selectedTrick.card(selectedTrick.size() - 1);
-        }
+				}
+				other = other.withTrickCollected();
+			}
+			return other.score();
+		}
 
-        // appel� par un noeud
-        // retourne une carte jouable possible � partir de ce noeud
-        private Card randomCard(TurnState state) {
-            if (state.isTerminal())
-                return null;
-            
-            TurnState other = TurnState.ofPackedComponents(state.packedScore(),
-                    state.packedUnplayedCards(), state.packedTrick());
-            
-            int random = seed.nextInt(playableCards(state, hand).size());
-            Card randomCard = playableCards(other, hand).get(random);
-            return randomCard;
-        }
+		// appele par le noeud ou la simulation aura lieu
+		// mets a jour les Sn et les Nn
+		private void MCSimulation() {
+			scores = finalScoreOfTurn(turnStateNode, hand);
+			setSn(Sn + scores.turnPoints(turnStateNode.trick().player(turnStateNode.trick().size()-1).team()));
+			setNn(Nn + 1);
+		}
 
-        // retourne le score d'une simulation
-        public Score finalScoreOfTurn(TurnState state, CardSet hand) {
-            TurnState other = TurnState.ofPackedComponents(state.packedScore(),
-                    state.packedUnplayedCards(), state.packedTrick());
+		// appele par le noeud ou on veut ajouter un fils
+		// retourne une liste des noeuds parents du plus eleves au plus bas
+		private List<Node> bonEndroit() {
+			List<Node> list = new LinkedList<>();
+			list.add(this);
+			if (this.isLeaf()) {
+				return list;
 
-            while (!other.isTerminal()) {
-                while (!other.trick().isFull()) {
+			}
+			Node theChild;
+			if (!this.sature()) {
+				return list;
+			}
+			if (this.sature()) {
+				this.setVnOfChildren();
+				theChild = this.childToExpand();
+				list.addAll(theChild.bonEndroit());
+				return list;
+			}
+			return null;
+		}
 
-                    Card addedCard = randomCard(other);
-                    other = other.withNewCardPlayed(addedCard);
+		// appelé par le noeud où la modification a eu lieu
+		// update tous ses parents en fonction de l'equipe de chaque parent
+		private void updateScores(List<Node> path) {
+			for (int i = 0; i < path.size(); i++) {
+				path.get(i).setSn(path.get(i).Sn + scores.turnPoints(path.get(i).turnStateNode.trick()
+						.player(path.get(i).turnStateNode.trick().size()-1).team()));
+				path.get(i).setNn(path.get(i).Nn + 1);
+			}
+		}
 
-                }
-                other = other.withTrickCollected();
-            }
-            return other.score();
-        }
+		// ajoute un noeud
+		private Node addNode() {
+			if (this.isLeaf()) {
+				return this;
+			}
+			TurnState other = TurnState.ofPackedComponents(this.turnStateNode.packedScore(),
+					turnStateNode.packedUnplayedCards(), turnStateNode.packedTrick());
 
-        // appel� par le noeud o� la simulation aura lieu
-        // mets � jour les Sn et les Nn
-        private void MCSimulation() {
-            setSn(getSn() + finalScoreOfTurn(turnStateNode, hand)
-                    .turnPoints(ownId.team()));
-            setNn(getNn() + 1);
-        }
+			Node resNode;
+			TurnState state;
+			other = other.trick().isFull() ? other.withTrickCollected() : other;
+			state = other.withNewCardPlayed(nonPlayedChildren.get(0));
+			nonPlayedChildren = nonPlayedChildren.remove(nonPlayedChildren.get(0));
+			resNode = new Node(state, hand, ownId, seed);
+			childrenNode.add(resNode);
+			if(!this.turnStateNode.trick().isEmpty()) {
+				resNode.path.add(this);
+			}
+			resNode.path.addAll(this.path);
 
-        // appel� par le noeud o� on veut ajouter un fils
-        // retour une liste des noeuds parents du plus �lev�s au plus bas
-        private List<Node> bonEndroit() {
-            List<Node> list = new LinkedList<>();
-            list.add(this);
+			return resNode;
+		}
 
-            if (this.isLeaf()) {
-                return list;
-                
-            }
+		// retourne vrai si le noeud appelant ne peut pas avoir d'enfants
+		private boolean isLeaf() {
+			return (turnStateNode.trick().isLast() && turnStateNode.trick().isFull());
+		}
 
-            Node theChild;
-            if (!this.sature()) {
-                return list;
-            }
-            if (this.sature()) {
-            	
-                this.setVnOfChildren();
-                theChild = this.childToExpand();
-                list.addAll(theChild.bonEndroit());
-                return list;
-            }
+		private void setNn(int a) {
+			this.Nn = a;
+		}
 
-            return null;
-        }
+		private void setSn(int a) {
+			this.Sn = a;
+		}
 
-        // appel� par le noeud o� la modification a eu lieu
-        // update tous ses parents
-        private void updateScores(List<Node> path) {
+		private void setVn(double Vn) {
+			this.Vn = Vn;
+		}
 
-            for (int i = 0; i < path.size(); i++) {
-                path.get(i).setSn(getSn() + path.get(i).getSn());
-                path.get(i).setNn(path.get(i).getNn() + 1);
-            }
-        }
-
-       
-        private Node addNode() {
-            if (this.isLeaf()) {
-                return this;
-            }
-            TurnState other = TurnState.ofPackedComponents(
-                    this.turnStateNode.packedScore(),
-                    turnStateNode.packedUnplayedCards(),
-                    turnStateNode.packedTrick());
-
-            Node n;
-            TurnState m;
-            other = other.trick().isFull() ? other.withTrickCollected() : other;
-            m = other.withNewCardPlayed(nonPlayedChildren.get(0));
-            nonPlayedChildren= nonPlayedChildren.remove(nonPlayedChildren.get(0));
-            n = new Node(m, hand, ownId, seed);
-            childrenNode.add(n);
-
-            n.path.add(this);
-            n.path.addAll(this.path);
-
-            return n;
-        }
-
-        private boolean isLeaf() {
-            return (turnStateNode.trick().isLast()
-                    && turnStateNode.trick().isFull());
-        }
-
-    }// end node
-
-    @Override
-    public Card cardToPlay(TurnState state, CardSet hand) {
-
-        if (hand.size() == 1) {
-            return hand.get(0);
-        }
-
-        Node bigRoot = new Node(state, hand, ownId, seed);
-        Node root = new Node(state, hand, ownId, seed);
-        int s = 0;
-        while (!bigRoot.sature()) {
-            root = bigRoot.addNode();
-            root.MCSimulation();
-            root.updateScores(root.path);
-            s++;
-        }
-        
-
-        
-        while (s < iterations) {
-        	bigRoot.setVnOfChildren();
-            root = bigRoot.childToExpand();
-            Node added = root.bonEndroit().get(root.bonEndroit().size() - 1).addNode();
-            added.MCSimulation();
-            added.updateScores(added.path);
-           
-            s++;
-        }
-
-        return bigRoot.chosenCard();
-    }
+	}// end node
 
 }
-
-
-
