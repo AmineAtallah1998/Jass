@@ -1,5 +1,6 @@
 package ch.epfl.javass.jass;
 
+import java.io.IOException;
 import java.util.Map;
 import ch.epfl.javass.jass.Card.Color;
 
@@ -42,8 +43,9 @@ public interface Player {
 	 * appelée chaque fois que l'atout change
 	 * 
 	 * @param trump : atout
+	 * @throws IOException 
 	 */
-	default void setTrump(Color trump) {
+	default void setTrump(Color trump){
 	}
 
 	/**
