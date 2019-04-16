@@ -34,7 +34,7 @@ public final class RemotePlayerClient implements Player, AutoCloseable{
 
     @Override
     public void close() throws IOException {
-        w.close();r.close();s.close();
+        s.close();w.close();r.close();
     }
 
     @Override
@@ -127,6 +127,7 @@ public final class RemotePlayerClient implements Player, AutoCloseable{
     private void newLineAndFlush() throws IOException {
         w.write('\n');
         w.flush();
+        
     }
 
 }

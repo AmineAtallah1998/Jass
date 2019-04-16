@@ -36,67 +36,67 @@ public final class RemotePlayerServer {
                         new InputStreamReader(s.getInputStream(), US_ASCII));
                 BufferedWriter w = new BufferedWriter(new OutputStreamWriter(
                         s.getOutputStream(), US_ASCII))) {
-            Loop:
-            while (true) {
-                String string = r.readLine();
-                String[] tab = StringSerializer.split(' ', string);
+           
+                while (true) {
 
-                switch (tab[0]) {
-                case "TRMP":
-                    player.setTrump(Card.Color.values()[StringSerializer
-                            .deserializeInt(tab[1])]);
-                    break;
-                case "HAND":
-                    player.updateHand(CardSet.ofPacked(
-                            StringSerializer.deserializeLong(tab[1])));
-                    break;
-                case "SCOR":
-                    player.updateScore(Score.ofPacked(
-                            StringSerializer.deserializeLong(tab[1])));
-                    break;
-                case "TRCK":
-                    player.updateTrick(Trick
-                            .ofPacked(StringSerializer.deserializeInt(tab[1])));
-                    break;
-                case "WINR":
-                    player.setWinningTeam(TeamId.values()[StringSerializer
-                            .deserializeInt(tab[1])]);
-                    break Loop;
+                    String string = r.readLine();
+                    String[] tab = StringSerializer.split(' ', string);
 
-                case "PLRS":
-                    PlayerId ownId = PlayerId.values()[StringSerializer
-                            .deserializeInt(tab[1])];
-                    String[] players = StringSerializer.split(',', tab[2]);
-                    Map<PlayerId, String> map = new EnumMap<>(PlayerId.class);
-                    for (int i = 0; i < 4; i++) {
-                        map.put(PlayerId.values()[i],
-                                StringSerializer.deserializeString(players[i]));
+                    switch (tab[0]) {
+                    case "TRMP":
+                        player.setTrump(Card.Color.values()[StringSerializer
+                                                            .deserializeInt(tab[1])]);
+                        break;
+                    case "HAND":
+                        player.updateHand(CardSet.ofPacked(
+                                StringSerializer.deserializeLong(tab[1])));
+                        break;
+                    case "SCOR":
+                        player.updateScore(Score.ofPacked(
+                                StringSerializer.deserializeLong(tab[1])));
+                        break;
+                    case "TRCK":
+                        player.updateTrick(Trick
+                                .ofPacked(StringSerializer.deserializeInt(tab[1])));
+                        break;
+                    case "WINR":
+                        player.setWinningTeam(TeamId.values()[StringSerializer
+                                                              .deserializeInt(tab[1])]);
+                        break;
+
+                    case "PLRS":
+                        PlayerId ownId = PlayerId.values()[StringSerializer
+                                                           .deserializeInt(tab[1])];
+                        String[] players = StringSerializer.split(',', tab[2]);
+                        Map<PlayerId, String> map = new EnumMap<>(PlayerId.class);
+                        for (int i = 0; i < 4; i++) {
+                            map.put(PlayerId.values()[i],
+                                    StringSerializer.deserializeString(players[i]));
+                        }
+                        player.setPlayers(ownId, map);
+                        break;
+
+                    case "CARD":
+                        CardSet hand = CardSet
+                        .ofPacked(StringSerializer.deserializeLong(tab[2]));
+                        String[] stateArguments = StringSerializer.split(',',
+                                tab[1]);
+                        TurnState state = TurnState.ofPackedComponents(
+                                StringSerializer.deserializeLong(stateArguments[0]),
+                                StringSerializer.deserializeLong(stateArguments[1]),
+                                StringSerializer.deserializeInt(stateArguments[2]));
+
+                        w.write(StringSerializer.serializeInt(player.cardToPlay(state, hand).packed()));
+                        w.write('\n');
+                        w.flush();
+                        break;
+
                     }
-                    player.setPlayers(ownId, map);
-                    break;
 
-                case "CARD":
-                    CardSet hand = CardSet
-                            .ofPacked(StringSerializer.deserializeLong(tab[2]));
-                    String[] stateArguments = StringSerializer.split(',',
-                            tab[1]);
-                    TurnState state = TurnState.ofPackedComponents(
-                            StringSerializer.deserializeLong(stateArguments[0]),
-                            StringSerializer.deserializeLong(stateArguments[1]),
-                            StringSerializer.deserializeInt(stateArguments[2]));
-                    
-                    w.write(StringSerializer.serializeInt(player.cardToPlay(state, hand).packed()));
-                    w.write('\n');
-                    w.flush();
-                    break;
-
-                default:
-                    continue Loop;
                 }
 
-            }
-
         } catch (IOException e) {
+            System.out.println("exception IO from server (RemotePlayerServer");
             throw new UncheckedIOException(e);
         }
 

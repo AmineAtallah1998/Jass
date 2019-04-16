@@ -6,6 +6,10 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 
+import ch.epfl.javass.jass.Card;
+import ch.epfl.javass.jass.Card.Color;
+import ch.epfl.javass.jass.Card.Rank;
+
 public final class StringSerializer {
 
     //Constructeur privé
