@@ -3,6 +3,7 @@ package ch.epfl.javass.gui;
 import ch.epfl.javass.jass.TeamId;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
 public final class ScoreBean {
@@ -15,8 +16,19 @@ public final class ScoreBean {
     private TeamId winningTeam;
 
     ReadOnlyIntegerProperty turnPointsProperty(TeamId team) {
-        return null; 
+        return team==TeamId.TEAM_1 ? new SimpleIntegerProperty(turnPoints1) : 
+            new SimpleIntegerProperty(turnPoints2);
     }
+    
+    ReadOnlyIntegerProperty gamePointsProperty(TeamId team) {
+        return team==TeamId.TEAM_1 ? new SimpleIntegerProperty(gamePoints1) : 
+            new SimpleIntegerProperty(gamePoints2);
+    }
+    ReadOnlyIntegerProperty totalPointsProperty(TeamId team) {
+        return team==TeamId.TEAM_1 ? new SimpleIntegerProperty(totalPoints1) : 
+            new SimpleIntegerProperty(totalPoints2); 
+    }
+    
     public void setTurnPoints(TeamId team, int newTurnPoints) {
         if(team==TeamId.TEAM_1) {
             turnPoints1=newTurnPoints;
@@ -40,13 +52,9 @@ public final class ScoreBean {
     }
     
     
-    
-    
-    
     public ReadOnlyObjectProperty<TeamId> winningTeamProperty() {
         return new SimpleObjectProperty<>(winningTeam);
     }
-    
     public void setWinningTeam(TeamId winningTeam) {
         this.winningTeam=winningTeam;
     }
