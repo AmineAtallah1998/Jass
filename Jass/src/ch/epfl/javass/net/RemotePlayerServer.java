@@ -28,17 +28,19 @@ public final class RemotePlayerServer {
     public RemotePlayerServer(Player player) {
         this.player=player;
     }
-
+   
     public void run() {
+        
         try (ServerSocket s0 = new ServerSocket(5108);
                 Socket s = s0.accept();
                 BufferedReader r = new BufferedReader(
                         new InputStreamReader(s.getInputStream(), US_ASCII));
                 BufferedWriter w = new BufferedWriter(new OutputStreamWriter(
-                        s.getOutputStream(), US_ASCII))) {
-           
+                        s.getOutputStream(), US_ASCII)))
+        {
+            
                 while (true) {
-
+                    
                     String string = r.readLine();
                     String[] tab = StringSerializer.split(' ', string);
 
@@ -46,6 +48,7 @@ public final class RemotePlayerServer {
                     case "TRMP":
                         player.setTrump(Card.Color.values()[StringSerializer
                                                             .deserializeInt(tab[1])]);
+                        
                         break;
                     case "HAND":
                         player.updateHand(CardSet.ofPacked(
@@ -61,7 +64,7 @@ public final class RemotePlayerServer {
                         break;
                     case "WINR":
                         player.setWinningTeam(TeamId.values()[StringSerializer
-                                                              .deserializeInt(tab[1])]);
+                                                             .deserializeInt(tab[1])]);
                         break;
 
                     case "PLRS":
@@ -91,15 +94,16 @@ public final class RemotePlayerServer {
                         w.flush();
                         break;
 
-                    }
-
-                }
-
+                    }//end of switch
+                   
+                }//end while
+                
         } catch (IOException e) {
-            System.out.println("exception IO from server (RemotePlayerServer");
             throw new UncheckedIOException(e);
         }
 
     }
 
 }
+
+

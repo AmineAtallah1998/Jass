@@ -10,18 +10,34 @@ public final class TrickBean {
 
     private Color trump;
     private PlayerId winningPlayer;
+    private ObservableMap<PlayerId, Card> trick;
 
     public ObservableMap<PlayerId, Card> trick() {
-        ObservableMap<PlayerId, Card> map = FXCollections.observableHashMap();
-
-
-       
-
-        return FXCollections.unmodifiableObservableMap(map);       
+        return FXCollections.unmodifiableObservableMap(trick);       
     }
 
-    void setTrick(Trick newTrick) {
+    public void setTrick(Trick newTrick) {
+        this.winningPlayer=newTrick.winningPlayer();
+        ObservableMap<PlayerId,Card>map = FXCollections.observableHashMap();
+        for (int i=0 ; i<newTrick.size() ; i++) {
+            map.put(newTrick.player(i), newTrick.card(i));
+        }
+        for (int i=0 ; i<4 ; i++) {
+            if(!map.containsKey(PlayerId.values()[i])) {
+                map.put(PlayerId.values()[i], null);
+            }
+        }
+        this.trick=map;
+    }
 
+    public Color trump() {
+        return trump;
+    }
+    public PlayerId winningPlayer() {
+        return winningPlayer;
+    }
+    public void setTrump(Color trump) {
+        this.trump=trump;
     }
 
 }

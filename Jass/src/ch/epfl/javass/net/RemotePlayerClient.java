@@ -18,8 +18,7 @@ import ch.epfl.javass.jass.TeamId;
 import ch.epfl.javass.jass.Trick;
 import ch.epfl.javass.jass.TurnState;
 
-//JAVADOC & Check about try with resources
-//CHANGER IF/ELSE AVEC LA METHODE JOIN STRINGSERIALIZER
+
 public final class RemotePlayerClient implements Player, AutoCloseable{
     
     private Socket s;
@@ -34,7 +33,9 @@ public final class RemotePlayerClient implements Player, AutoCloseable{
 
     @Override
     public void close() throws IOException {
-        s.close();w.close();r.close();
+        s.close();
+        w.close();
+        r.close();
     }
 
     @Override
@@ -97,7 +98,7 @@ public final class RemotePlayerClient implements Player, AutoCloseable{
     @Override
     public void updateTrick(Trick newTrick) {
         try {
-            w.write("TRCK "+StringSerializer.serializeInt(newTrick.packed()));
+            w.write( "TRCK " +StringSerializer.serializeInt(newTrick.packed()));
             newLineAndFlush();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -117,6 +118,7 @@ public final class RemotePlayerClient implements Player, AutoCloseable{
     @Override
     public void setWinningTeam(TeamId winningTeam) {
         try {
+            
             w.write("WINR "+StringSerializer.serializeInt(winningTeam.ordinal()));
             newLineAndFlush();
         } catch (IOException e) {
@@ -127,7 +129,8 @@ public final class RemotePlayerClient implements Player, AutoCloseable{
     private void newLineAndFlush() throws IOException {
         w.write('\n');
         w.flush();
-        
-    }
+     }
 
 }
+
+

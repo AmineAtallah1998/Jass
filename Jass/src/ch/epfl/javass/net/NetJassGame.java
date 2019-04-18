@@ -35,8 +35,7 @@ public class NetJassGame {
                     try {
                         player = new PrintingPlayer(new RemotePlayerClient("localhost"));
                                      
-                    } catch (IOException e) {
-                        
+                    } catch (IOException e) {   
                         throw new UncheckedIOException(e);
                     }
                 }
@@ -50,8 +49,15 @@ public class NetJassGame {
             g.advanceToEndOfNextTrick();
             System.out.println("new Trick");
         }
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         System.out.println("finish");
     }
 }
+
 
 
