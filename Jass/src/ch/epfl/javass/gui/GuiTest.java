@@ -11,6 +11,8 @@ import ch.epfl.javass.jass.TeamId;
 import ch.epfl.javass.jass.TurnState;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.stage.Stage;
 
 public final class GuiTest extends Application {
@@ -22,29 +24,27 @@ public final class GuiTest extends Application {
       PlayerId.ALL.forEach(p -> ns.put(p, p.name()));
       ScoreBean sB = new ScoreBean();
       TrickBean tB = new TrickBean();
-      System.out.println(tB.trumpProperty());
+      
        GraphicalPlayer g =
         new GraphicalPlayer(PlayerId.PLAYER_2, ns, sB, tB);
       g.createStage().show();
-
       new AnimationTimer() {
         long now0 = 0;
         TurnState s = TurnState.initial(Color.SPADE,
                         Score.INITIAL,
                         PlayerId.PLAYER_3);
         CardSet d = CardSet.ALL_CARDS;
-
+       
         @Override
         public void handle(long now) {
       if (now - now0 < 1_000_000_000L || s.isTerminal())
         return;
       now0 = now;
-      System.out.println(tB.trumpProperty());
+     
       s = s.withNewCardPlayed(d.get(0));
       d = d.remove(d.get(0));
       tB.setTrump(s.trick().trump());
       tB.setTrick(s.trick());
-
       if (s.trick().isFull()) {
         s = s.withTrickCollected();
         for (TeamId t: TeamId.ALL)
@@ -53,6 +53,6 @@ public final class GuiTest extends Application {
  
       
         }
-      }.start();
+      }.start(); 
     }
   }

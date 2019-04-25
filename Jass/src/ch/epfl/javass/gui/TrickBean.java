@@ -55,7 +55,9 @@ import javafx.collections.*;
      * Il affecte dans la map les cartes jouées au joueurs correspendants et null aux joueurs qui n'ont pas joué
      */
     public void setTrick(Trick newTrick) {
+        if(!newTrick.isEmpty())
         this.winningPlayer=newTrick.winningPlayer();
+        
         ObservableMap<PlayerId,Card>map = FXCollections.observableHashMap();
         for (int i=0 ; i<newTrick.size() ; i++) {
             map.put(newTrick.player(i), newTrick.card(i));

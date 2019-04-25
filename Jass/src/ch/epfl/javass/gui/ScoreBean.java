@@ -28,7 +28,7 @@ public final class ScoreBean {
      */
     public ReadOnlyIntegerProperty turnPointsProperty(TeamId team) {
         return team==TeamId.TEAM_1 ? new SimpleIntegerProperty(turnPoints1) : 
-            new SimpleIntegerProperty(turnPoints2);
+            new SimpleIntegerProperty(turnPoints2); 
     }
     
     /**
