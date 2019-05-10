@@ -1,14 +1,9 @@
 package ch.epfl.javass.net;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
-import java.util.List;
 
-import ch.epfl.javass.jass.Card;
-import ch.epfl.javass.jass.Card.Color;
-import ch.epfl.javass.jass.Card.Rank;
+
 
 public final class StringSerializer {
 
@@ -36,9 +31,9 @@ public final class StringSerializer {
         return encoder.encodeToString(s.getBytes(StandardCharsets.UTF_8));
     }
     
-    public static String deserializeString(String s) {
+    public static String deserializeString(String s)  {
         Base64.Decoder decoder =Base64.getDecoder();
-        return new String(decoder.decode(s));
+        return new String(decoder.decode(s) , StandardCharsets.UTF_8);
     }
     
     public static String combine(char ch , String...strings ) {

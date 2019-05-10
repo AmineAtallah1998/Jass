@@ -63,9 +63,9 @@ public final class RemotePlayerClient implements Player, AutoCloseable{
             int i=0;
             for (String s : playerNames.values()) {
                 if(i==playerNames.size()-1) {
-                    w.write(s);
+                    w.write(StringSerializer.serializeString(s));
                 }else {
-                w.write(s+",");
+                w.write(StringSerializer.serializeString(s)+",");
                 }
                 i++;
             }
@@ -79,6 +79,7 @@ public final class RemotePlayerClient implements Player, AutoCloseable{
     public void updateHand(CardSet newHand) {
         try {
             w.write("HAND "+StringSerializer.serializeLong(newHand.packed()));
+            
             newLineAndFlush();
         } catch (IOException e) {
             throw new UncheckedIOException(e);

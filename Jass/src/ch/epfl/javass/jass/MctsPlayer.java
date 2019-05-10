@@ -64,7 +64,7 @@ public final class MctsPlayer implements Player {
 		return bigRoot.chosenCard();
 	}
 
-	private static class Node {
+	private static final class Node {
 		private TurnState turnStateNode;
 		private List<Node> childrenNode; // liste de tous les noeuds fils
 		private CardSet nextPlayableCards; // ensemble de toutes les cartes jouables
@@ -79,16 +79,8 @@ public final class MctsPlayer implements Player {
 		private CardSet nonPlayedChildren;
 		private Score scores; //les scores apres simulation d'un noeud
 
-		/**
-		 * construit un noeud
-		 * 
-		 * @param turnStateNode : etat du tour
-		 * @param hand          : main du joueur
-		 * @param ownId         : joueur simulé
-		 * @param seed          : graine aleatoire
-		 * 
-		 */
-		public Node(TurnState turnStateNode, CardSet hand, PlayerId ownId, SplittableRandom seed) {
+		//construit un noeud
+		private Node(TurnState turnStateNode, CardSet hand, PlayerId ownId, SplittableRandom seed) {
 			this.ownId = ownId;
 			this.seed = seed;
 			this.turnStateNode = turnStateNode;

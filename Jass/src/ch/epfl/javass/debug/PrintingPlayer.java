@@ -21,9 +21,9 @@ public final class PrintingPlayer implements Player {
 
     @Override
     public Card cardToPlay(TurnState state, CardSet hand) {
-   //   System.out.print("C'est à moi de jouer... Je joue : ");
+      System.out.print("C'est à moi de jouer... Je joue : ");
       Card c = underlyingPlayer.cardToPlay(state, hand);
-     // System.out.println(c);
+      System.out.println(c);
       return c;
     } 
     public void setPlayers(PlayerId ownId, Map<PlayerId, String> playerNames) {
@@ -31,21 +31,21 @@ public final class PrintingPlayer implements Player {
     }
     
     public void updateHand(CardSet newHand) {
-       // System.out.println("Update de la main");
-        //System.out.println(newHand);
+        System.out.println("Update de la main");
+        System.out.println(newHand);
     }
     
     public void setTrump(Color trump) {
-     //   System.out.println("Atout "+ trump );
+        System.out.println("Atout "+ trump );
         
     }
     
     public void updateTrick(Trick newTrick) {
-       // System.out.println("le pli est : "+newTrick);
+        System.out.println("le pli est : "+newTrick);
     }
     
     public void updateScore(Score score) {
-      //  System.out.println("updateScore");
+        System.out.println("updateScore");
         System.out.println("Scores" + score);
         
     }

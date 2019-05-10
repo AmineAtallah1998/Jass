@@ -73,6 +73,7 @@ public final class RemotePlayerServer {
                         String[] players = StringSerializer.split(',', tab[2]);
                         Map<PlayerId, String> map = new EnumMap<>(PlayerId.class);
                         for (int i = 0; i < 4; i++) {
+
                             map.put(PlayerId.values()[i],
                                     StringSerializer.deserializeString(players[i]));
                         }

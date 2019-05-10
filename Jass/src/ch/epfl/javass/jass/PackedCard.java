@@ -15,7 +15,7 @@ public final class PackedCard {
 	/**
 	 * Carte empaquetee invalide
 	 */
-	public static int INVALID = 0b111111;
+	public static final int INVALID = 0b111111;
 
 	// Constructeur prive
 	private PackedCard() {

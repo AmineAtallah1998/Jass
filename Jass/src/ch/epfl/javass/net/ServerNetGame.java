@@ -20,7 +20,6 @@ public class ServerNetGame {
         Player player = new RandomPlayer(2019);
         RemotePlayerServer gali =  new RemotePlayerServer(player);
         gali.run();
-        
         System.out.println("on devrais pas arriver la");
     }
 }

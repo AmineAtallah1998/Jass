@@ -15,7 +15,7 @@ public final class Score {
 	/**
 	 * Score initial de la partie
 	 */
-	public static Score INITIAL = new Score(0);
+	public static final Score INITIAL = new Score(0);
 
 	// Constructeur prive
 	private Score(long c) {
