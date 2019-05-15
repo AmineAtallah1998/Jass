@@ -7,8 +7,6 @@ import java.util.Set;
 import ch.epfl.javass.jass.Card;
 import ch.epfl.javass.jass.CardSet;
 import ch.epfl.javass.jass.Jass;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
@@ -18,6 +16,7 @@ import javafx.collections.ObservableSet;
  * @author Amine Atallah (284592)
  */
 public final class HandBean {
+
     private ObservableList<Card> hand = initHand();
     private ObservableSet<Card> playableCards = FXCollections.observableSet();
 
@@ -28,7 +27,6 @@ public final class HandBean {
      *            remplaçons les cartes jouées par un null
      */
     public void setHand(CardSet newHand) {
-     
         if (newHand.size() == hand.size()) {
             for (int i = 0; i < Jass.HAND_SIZE; i++) {
                 hand.set(i, newHand.get(i));
@@ -47,7 +45,7 @@ public final class HandBean {
      * @param newPlayableCards
      *            Met les cartes jouables sous la forme d'une ObservableSet :
      */
-    public void setPlayableCards(CardSet newPlayableCards) { 
+    public void setPlayableCards(CardSet newPlayableCards) {
         playableCards.clear();
         Set<Card> cards = new HashSet<>();
         for (int i = 0; i < newPlayableCards.size(); i++) {

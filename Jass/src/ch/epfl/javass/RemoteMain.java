@@ -9,13 +9,19 @@ import javafx.stage.Stage;
 
 public final class RemoteMain extends Application {
 
+    /**
+     * methode main de RemoteMain
+     * 
+     * @param args : arguments donnés
+     */
     public static void main(String[] args) {
        launch(args);
     }
-    
+    /*
+     * @see javafx.application.Application#start(javafx.stage.Stage)
+     */
     @Override
     public void start(Stage primaryStage) throws Exception {
-        
         RemotePlayerServer server = new RemotePlayerServer(new PacedPlayer(new MctsPlayer(PlayerId.PLAYER_3 , 200, 2000),2));
         Thread remoteThread = new Thread(()-> {
             server.run();
@@ -24,5 +30,4 @@ public final class RemoteMain extends Application {
         remoteThread.setDaemon(true);
         remoteThread.start();
     }
-
 }

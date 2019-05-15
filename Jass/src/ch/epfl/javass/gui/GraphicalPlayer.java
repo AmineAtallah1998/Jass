@@ -39,7 +39,7 @@ public final class GraphicalPlayer {
     private final PlayerId player;
     private Scene scene;
 
-    private final ObservableMap<Card , Image> observableMap = getMap();
+    private final ObservableMap<Card , Image> observableMap = getMapCard();
     private final ObservableMap<Color , Image> observableMapTrump = getMapTrump();
 
     // TODO TEST VICTORYPANES
@@ -54,13 +54,13 @@ public final class GraphicalPlayer {
             ScoreBean beanScore, TrickBean beanTrick, HandBean beanHand, BlockingQueue<Card> queue) {
         this.playerNames = playerNames;
         this.player=player;
+        
         GridPane scorePane = createScorePane(beanScore);
         GridPane trickPane = createTrickPane(beanTrick);
         HBox handPane = createHandPane(beanHand, queue);
-
         BorderPane pane= new BorderPane(trickPane , scorePane , null , handPane , null);
- 
         StackPane mainPane = new StackPane();
+        
         mainPane.getChildren().add(pane);
         mainPane.getChildren().addAll(createVictoryPane1(beanScore), createVictoryPane2(beanScore));
         scene= new Scene(mainPane);
@@ -73,7 +73,6 @@ public final class GraphicalPlayer {
         Stage stage = new Stage();
         stage.setScene(scene);
         stage.setTitle("Javass - "+playerNames.get(player));
-        stage.setMaxHeight(900);; //SHOULDN'T ADD THIS
         return stage;
     }
 
@@ -84,23 +83,24 @@ public final class GraphicalPlayer {
                 "-fx-padding: 5px;");
      
         for (int i=0 ; i<9 ; i++) {
-            int s=i;
+            int s=i; // crée uniquement pour utilisation dans l'expression lambda
+            
             ImageView card = new ImageView();
             card.setFitWidth(80);
             card.setFitHeight(120);
-            card.imageProperty().bind(Bindings.valueAt(observableMap, Bindings.valueAt(hb.hand(), i)));
-            card.setOnMouseClicked((e)->{
+            card.imageProperty().bind( Bindings.valueAt(observableMap, Bindings.valueAt(hb.hand(), i)) );
+            
+            card.setOnMouseClicked( (e) ->{
                 try {
                     queue.put(hb.hand().get(s));
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }
             });
-            
-            
-            BooleanBinding isPlayable = Bindings.createBooleanBinding(()->{
+                        
+            BooleanBinding isPlayable = Bindings.createBooleanBinding( ()->{
                 return hb.playableCards().contains(hb.hand().get(s));
-            }, hb.playableCards() , hb.hand());
+            }, hb.playableCards() , hb.hand() );
             
             card.opacityProperty().bind(Bindings.when(isPlayable).then(1).otherwise(0.2));
             card.disableProperty().bind(isPlayable.not());
@@ -110,56 +110,30 @@ public final class GraphicalPlayer {
         
         return handPane;
     }
-    //Panneau du score
-    private GridPane createScorePane(ScoreBean sb) {
-        GridPane scorePane = new GridPane();
-        scorePane.setStyle("-fx-font: 16 Optima;-fx-background-color: lightgray;-fx-padding: 5px;-fx-alignment: center;");
-        
-        //NAMES x2
-        Text names = new Text(playerNames.get(PlayerId.values()[0])+" et "+playerNames.get(PlayerId.values()[2])+" : " );
-        names.setTextAlignment(TextAlignment.RIGHT);
-        scorePane.add(names, 0, 0);
-        Text names1 = new Text(playerNames.get(PlayerId.values()[1])+" et "+playerNames.get(PlayerId.values()[3])+" : " );
-        names1.setTextAlignment(TextAlignment.RIGHT);
-        scorePane.add(names1, 0, 1);
-        //NAMES
-        
-        //STRING TOTAL x2
-        Text stringTotal = new Text(" /Total :");
-        stringTotal.setTextAlignment(TextAlignment.LEFT);
-        scorePane.add(stringTotal, 3, 0);
-        Text stringTotal1 = new Text(" /Total :");
-        stringTotal1.setTextAlignment(TextAlignment.LEFT);
-        scorePane.add(stringTotal1, 3, 1);
-        //STRING TOTAL
-        
-        //TURNSCORES
+    private Text nameCreator(int p1, int p2) {
+        Text res= new Text (playerNames.get(PlayerId.values()[p1])+" et "+playerNames.get(PlayerId.values()[p2])+" : ");
+        res.setTextAlignment(TextAlignment.RIGHT);
+        return res;
+    }
+    private Text turnScoreCreator (TeamId t, ScoreBean sb) {
         Text turnScore= new Text();
-        turnScore.textProperty().bind(Bindings.convert(sb.turnPointsProperty(TeamId.TEAM_1))); //BIND HERE
+        turnScore.textProperty().bind(Bindings.convert(sb.turnPointsProperty(t)));
         turnScore.setTextAlignment(TextAlignment.RIGHT);
-        scorePane.add(turnScore, 1, 0);
-        Text turnScore1= new Text();
-        turnScore1.textProperty().bind(Bindings.convert(sb.turnPointsProperty(TeamId.TEAM_2)));  //BIND HERE
-        turnScore1.setTextAlignment(TextAlignment.RIGHT);
-        scorePane.add(turnScore1, 1, 1);
-        //TURNSCORES
-
-        //GAMEPOINTS
+        return turnScore;
+    }
+    
+    private Text gamePointsCreator (TeamId t, ScoreBean sb ){
         Text gamePoints = new Text();
         gamePoints.setTextAlignment(TextAlignment.RIGHT);
-        gamePoints.textProperty().bind( Bindings.convert(sb.gamePointsProperty(TeamId.TEAM_1)));
-        scorePane.add(gamePoints, 4, 0);
-        Text gamePoints1 = new Text();
-        gamePoints1.textProperty().bind( Bindings.convert(sb.gamePointsProperty(TeamId.TEAM_2)));
-        gamePoints1.setTextAlignment(TextAlignment.RIGHT);
-        scorePane.add(gamePoints1, 4, 1);
-        //GAMEPOINTS
-
-        //DIFFERENCE
+        gamePoints.textProperty().bind( Bindings.convert(sb.gamePointsProperty(t)));
+        return gamePoints; 
+    }
+    
+    private Text diffCreator (TeamId t, ScoreBean sb) {
         Text textDiff = new Text();
         StringProperty difference = new SimpleStringProperty();
         textDiff.textProperty().bind(difference);
-        sb.turnPointsProperty(TeamId.TEAM_1).addListener((o,oV,nV)->{ 
+        sb.turnPointsProperty(t).addListener((o,oV,nV)->{ 
             
             if(nV.intValue()!=0) {
             int diff = nV.intValue()-oV.intValue();
@@ -169,25 +143,81 @@ public final class GraphicalPlayer {
             difference.set("");  
             }
         });
+        return textDiff;
+    }   
+    //Panneau du score
+    private GridPane createScorePane(ScoreBean sb) {
+        GridPane scorePane = new GridPane();
+        scorePane.setStyle("-fx-font: 16 Optima;-fx-background-color: lightgray;-fx-padding: 5px;-fx-alignment: center;");
+        
+        //NAMES x2
+        Text names= nameCreator (0,2);
+        Text names1= nameCreator(1,3);
+        scorePane.add(names, 0, 0);
+        scorePane.add(names1, 0, 1);
+        
+        //STRING TOTAL x2
+        Text stringTotal = new Text(" /Total :");
+        stringTotal.setTextAlignment(TextAlignment.LEFT);
+        scorePane.add(stringTotal, 3, 0);
+        
+        Text stringTotal1 = new Text(" /Total :");
+        stringTotal1.setTextAlignment(TextAlignment.LEFT);
+        scorePane.add(stringTotal1, 3, 1);
+    
+        
+        //TURNSCORES
+        Text turnScore= turnScoreCreator(TeamId.TEAM_1,sb);
+        scorePane.add(turnScore, 1, 0);
+        
+        Text turnScore1 = turnScoreCreator(TeamId.TEAM_2,sb);
+        scorePane.add(turnScore1, 1, 1);
+        
+
+        //GAMEPOINTS
+        Text gamePoints= gamePointsCreator(TeamId.TEAM_1, sb);
+        scorePane.add(gamePoints, 4, 0);
+        
+        Text gamePoints1= gamePointsCreator(TeamId.TEAM_2, sb);        
+          scorePane.add(gamePoints1, 4, 1);
+        
+
+        //DIFFERENCE
+        Text textDiff= diffCreator(TeamId.TEAM_1, sb);
         scorePane.add(textDiff, 2, 0);
         
-        Text textDiff1 = new Text();
-        StringProperty difference1 = new SimpleStringProperty();
-        textDiff1.textProperty().bind(difference1);
-        sb.turnPointsProperty(TeamId.TEAM_2).addListener((o,oV,nV)->{ 
-            if(nV.intValue()!=0) {
-                int diff = nV.intValue()-oV.intValue();
-                difference1.set("(+"+Integer.toString(diff)+")");
-                }else {
-                difference1.set("");  
-                }
-        });
+        Text textDiff1= diffCreator(TeamId.TEAM_2, sb);
         scorePane.add(textDiff1, 2, 1);
-        //DIFFERENCE
 
         return scorePane;
     }
-
+    private ImageView createTrump (TrickBean tb) {
+        ImageView imageTrump = new ImageView();
+        imageTrump.imageProperty().bind(Bindings.valueAt(observableMapTrump, tb.trumpProperty()));
+        imageTrump.setFitWidth(101);
+        imageTrump.setFitHeight(101);
+        return imageTrump;       
+    }
+    
+    private VBox createCard(TrickBean tb, Rectangle halo, PlayerId p, Pos value  ) {
+        
+        Text leftCard = new Text();
+        leftCard.setStyle("-fx-font: 14 Optima;-fx-padding: 5px; -fx-alignment: center;");
+        leftCard = new Text(playerNames.get(p));
+        
+        ImageView imageCardLeft = new ImageView();
+        imageCardLeft.imageProperty().bind(Bindings.valueAt(observableMap, Bindings.valueAt(tb.trick(), p) ));
+        imageCardLeft.setFitWidth(120);
+        imageCardLeft.setFitHeight(180);
+        
+        StackPane paneStack = new StackPane();
+        halo.visibleProperty().bind(tb.winningPlayerProperty().isEqualTo(p));
+        paneStack.getChildren().addAll(halo, imageCardLeft);
+      
+        VBox nodeCardName = new VBox(leftCard , paneStack);
+        nodeCardName.setAlignment(value);
+        return nodeCardName;
+    }
     // Panneau du pli
     private GridPane createTrickPane(TrickBean tb) {
 
@@ -200,86 +230,34 @@ public final class GraphicalPlayer {
                 "-fx-alignment: center;");
 
         //TRUMP
-        ImageView imageTrump = new ImageView();
-        imageTrump.imageProperty().bind(Bindings.valueAt(observableMapTrump, tb.trumpProperty()));
-        imageTrump.setFitWidth(101);
-        imageTrump.setFitHeight(101);
+        ImageView imageTrump = createTrump(tb);
         trickPane.add(imageTrump, 1, 1);
         GridPane.setHalignment(imageTrump, HPos.CENTER);
-        //TRUMP
 
         //HALO
         Rectangle halo = getHalo();
         Rectangle halo2 = getHalo();
         Rectangle halo3 = getHalo();
         Rectangle halo4 = getHalo();
-        //HALO
 
         //CARD LEFT
-        Text leftCard = new Text();
-        leftCard.setStyle("-fx-font: 14 Optima;-fx-padding: 5px; -fx-alignment: center;");
         PlayerId p = player==PlayerId.PLAYER_1 ? PlayerId.PLAYER_4 : PlayerId.values()[player.ordinal()-1];
-        leftCard = new Text(playerNames.get(p));
-        ImageView imageCardLeft = new ImageView();
-        imageCardLeft.imageProperty().bind(Bindings.valueAt(observableMap, Bindings.valueAt(tb.trick(), p) ));
-        imageCardLeft.setFitWidth(120);
-        imageCardLeft.setFitHeight(180);
-        StackPane paneStack = new StackPane();
-        halo.visibleProperty().bind(tb.winningPlayerProperty().isEqualTo(p));
-        paneStack.getChildren().addAll(halo, imageCardLeft);
-        VBox nodeCardName = new VBox(leftCard , paneStack);
-        nodeCardName.setAlignment(Pos.CENTER);
+        VBox nodeCardName = createCard(tb, halo, p, Pos.CENTER);    
         trickPane.add(nodeCardName, 0 , 1);
-        //CARD LEFT
+      
 
         //CARD RIGHT
-        Text rightC = new Text();
-        rightC.setStyle("-fx-font: 14 Optima;-fx-padding: 5px; -fx-alignment: center;");
-        PlayerId p2 = PlayerId.values()[(player.ordinal()+1)%4];
-        rightC = new Text(playerNames.get(p2));
-        ImageView imageRight = new ImageView();
-        imageRight.imageProperty().bind(Bindings.valueAt(observableMap, Bindings.valueAt(tb.trick(), p2) ));
-        imageRight.setFitWidth(120);
-        imageRight.setFitHeight(180);
-        StackPane paneStack2 = new StackPane();
-        halo2.visibleProperty().bind(tb.winningPlayerProperty().isEqualTo(p2));
-        paneStack2.getChildren().addAll(halo2, imageRight);
-        VBox nodeCardName2 = new VBox(rightC , paneStack2);
-        nodeCardName2.setAlignment(Pos.CENTER);
+        PlayerId p2 = PlayerId.values()[(player.ordinal()+1)%4];        
+        VBox nodeCardName2 = createCard(tb, halo2, p2,Pos.CENTER);
         trickPane.add(nodeCardName2, 2 , 1);
-        //CARD RIGHT
 
-        //CARD UP
-        Text upMiddle = new Text();
-        upMiddle.setStyle("-fx-font: 14 Optima;-fx-padding: 5px; -fx-alignment: center;");
         PlayerId p3 = PlayerId.values()[(p2.ordinal()+1)%4];
-        upMiddle = new Text(playerNames.get(p3));
-        ImageView  upMiddleImage = new ImageView();
-        upMiddleImage.imageProperty().bind(Bindings.valueAt(observableMap, Bindings.valueAt(tb.trick(), p3) ));
-        upMiddleImage.setFitWidth(120);
-        upMiddleImage.setFitHeight(180);
-        StackPane paneStack3 = new StackPane();
-        halo3.visibleProperty().bind(tb.winningPlayerProperty().isEqualTo(p3));
-        paneStack3.getChildren().addAll(halo3, upMiddleImage);
-        VBox nodeCardName3 = new VBox(upMiddle , paneStack3);
-        nodeCardName3.setAlignment(Pos.CENTER);
+        VBox nodeCardName3 =createCard(tb, halo3, p3,Pos.CENTER);
         trickPane.add(nodeCardName3,1,0);
-        //CARD UP
-
-        //CARD DOWN (MINE)
-        Text downMiddle = new Text(playerNames.get(player));
-        downMiddle.setStyle("-fx-font: 14 Optima;-fx-padding: 5px; -fx-alignment: center;");
-        ImageView downMiddleImage=new ImageView();
-        downMiddleImage.imageProperty().bind(Bindings.valueAt(observableMap, Bindings.valueAt(tb.trick(), player)));
-        downMiddleImage.setFitWidth(120);
-        downMiddleImage.setFitHeight(180);
-        StackPane paneStack4 = new StackPane();
-        halo4.visibleProperty().bind(tb.winningPlayerProperty().isEqualTo(player));
-        paneStack4.getChildren().addAll(halo4, downMiddleImage);
-        VBox nodeCardName4 = new VBox(paneStack4 , downMiddle);
-        nodeCardName4.setAlignment(Pos.BOTTOM_CENTER);
+  
+        //CARD DOWN (GraphicalPlayer)
+        VBox nodeCardName4= createCard(tb, halo4, player, Pos.BOTTOM_CENTER);
         trickPane.add(nodeCardName4,1,2);
-        //CARD DOWN (MINE)
 
         return trickPane;
     }
@@ -326,7 +304,7 @@ public final class GraphicalPlayer {
     }
 
     //Associe chaque carte a son image
-    private ObservableMap<Card,Image  > getMap(){
+    private ObservableMap<Card,Image  > getMapCard(){
         ObservableMap<Card , Image> map = FXCollections.observableHashMap();
         for (int i=0; i<9;i++) {
             for (int j=0; j<4;j++) {
@@ -355,6 +333,3 @@ public final class GraphicalPlayer {
         return "/trump_"+color.ordinal()+".png";
     }
 }
-
-
-

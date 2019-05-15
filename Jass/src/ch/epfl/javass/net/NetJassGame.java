@@ -32,7 +32,7 @@ public class NetJassGame {
             else {
                 player = new RandomPlayer(2019);
                 if(pId ==PlayerId.PLAYER_2) {
-                    try {
+                    try{
                         player = new PrintingPlayer(new RemotePlayerClient("localhost"));
                                      
                     } catch (IOException e) {   
@@ -47,14 +47,8 @@ public class NetJassGame {
         JassGame g = new JassGame(2019, players, playerNames);
         while (!g.isGameOver()) {
             g.advanceToEndOfNextTrick();
-            System.out.println("new Trick");
         }
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+       
         System.out.println("finish");
     }
 }

@@ -41,9 +41,10 @@ public final class GuiTest extends Application {
 
         @Override
         public void handle(long now) {
-      if (now - now0 < 1_000_000_000L || s.isTerminal())
+      if (now - now0 < 1_000_000_000L )
         return;
       now0 = now;
+      
       s = s.withNewCardPlayed(d.get(0));
       d = d.remove(d.get(0));
       tB.setTrump(s.trick().trump());
@@ -53,6 +54,9 @@ public final class GuiTest extends Application {
         s = s.withTrickCollected();
         for (TeamId t: TeamId.ALL)
           sB.setTurnPoints(t, s.score().turnPoints(t));
+      }
+      if(s.isTerminal()) {
+          d = CardSet.ALL_CARDS;
       }
       
         }

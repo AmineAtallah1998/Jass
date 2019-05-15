@@ -1,6 +1,6 @@
 package ch.epfl.javass;
 
-import java.io.IOError;
+import java.io.IOException;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -12,114 +12,97 @@ import ch.epfl.javass.jass.PacedPlayer;
 import ch.epfl.javass.jass.Player;
 import ch.epfl.javass.jass.PlayerId;
 import ch.epfl.javass.net.RemotePlayerClient;
-import ch.epfl.javass.net.RemotePlayerServer;
 import javafx.application.Application;
 import javafx.stage.Stage;
 import javafx.util.Pair;
 
+/**
+ * LocalMain : programme principal permettant de jouer une partie locale
+ * 
+ * @author Amine Atallah(284592)
+ * @author Mohamed Ali Dhraief (283509)
+ *
+ */
 public final class LocalMain extends Application {
-
     public static void main(String[] args) {
         launch(args);
     }
 
-    private void checkSeed(String s) {
-        try {
-                Long.parseLong(s);
-        }
-        catch (NumberFormatException e) {
-            System.out.println("la graine aléatoire n'est pas un long valide ");
-            System.exit(1);
-        }
-    }
-
+    /*
+     * @see javafx.application.Application#start(javafx.stage.Stage)
+     */
     @Override                            
     public void start(Stage primaryStage) throws Exception {
         System.out.println("GO!!");
         String[] defaultNames = { "Aline", "Bastien", "Colette" , "David"};
+        int defaultIterations = 10_000;
+        String defaultHost = "localHost";
+        int minTime = 2;
         Random seed = null;
-        //GESTION DES ERREURS
         List<String> arguments = getParameters().getRaw();
-        
-        if (arguments.size()>5) {
-            System.out.println("Error: undefined number of  paramaters");
-            System.exit(1);
-        }
 
-        
-        else if (arguments.size()==5) {
+        // GESTION DES ERREURS TODO show utilisation
+        if (arguments.size() > 5 || arguments.size() < 4) {
+            System.err.println("Error: nombre de paramateres incorrect");
+            System.exit(1);
+        } else if (arguments.size() == 5) {
             checkSeed(arguments.get(4));
-            seed = new Random(Long.parseLong(arguments.get(4)));     
-            for (int i=0 ; i<arguments.size() ; i++) {
-                if (!checkNames (arguments.get(i),i).getKey()) {
-                    System.out.println(checkNames (arguments.get(i),i).getValue());
-                    System.exit(1);
-                }
-        }
-        }
-        
-        else {
-            seed= new Random();
-            for (int i=0 ; i<arguments.size() ; i++) {
-                if (!checkNames (arguments.get(i),i).getKey()) {
-                    System.out.println(checkNames (arguments.get(i),i).getValue());
+            seed = new Random(Long.parseLong(arguments.get(4)));
+            for (int i = 0; i < arguments.size(); i++) {
+                if (!checkArgument(arguments.get(i), i).getKey()) {
+                    System.err.println(
+                            checkArgument(arguments.get(i), i).getValue());
                     System.exit(1);
                 }
             }
-            
+        } else {
+            seed = new Random();
+            for (int i = 0; i < arguments.size(); i++) {
+                if (!checkArgument(arguments.get(i), i).getKey()) {
+                    System.err.println(
+                            checkArgument(arguments.get(i), i).getValue());
+                    System.exit(1);
+                }
+            }
         }
 
-
-
+        // GENERATION DES GRAINES ALEATOIRES
         long[] seeds = new long[1+numberOfMctsPlayers(arguments)];
         for (int i=0 ; i< seeds.length ; i++) {
             seeds[i]=seed.nextLong();
         }
-        
-       
+
+
+        // CREATION DES JOUEURS
         Map<PlayerId, Player> players = new EnumMap<>(PlayerId.class);
         Map<PlayerId, String> names = new EnumMap<>(PlayerId.class);
-        
-        int comp=0;
-        
-        for (int i=0 ; i<arguments.size() ; i++) {
-            String s = arguments.get(i);
-            if(s.charAt(0)=='h') {
-                players.put(PlayerId.values()[i], new GraphicalPlayerAdapter());
-                String[] tabString = s.split(":");
-                if(tabString.length==2) {
-                    names.put(PlayerId.values()[i], tabString[1]);
-                }else {
-                    names.put(PlayerId.values()[i], defaultNames[i]);
-                }
-            }
-            else if(s.charAt(0)=='s') {
-              comp++;
-              int iterations = s.split(":").length==3 ? Integer.parseInt(s.split(":")[2]) :10_000;
-              players.put(PlayerId.values()[i],
-                      new PacedPlayer(new MctsPlayer(PlayerId.values()[i],seeds[comp],iterations),2));
-              String[] tabString = s.split(":");
-              if(tabString.length==2 && tabString[1]!="") {
-                  names.put(PlayerId.values()[i], tabString[1]);
-              }else {
-                  names.put(PlayerId.values()[i], defaultNames[i]);
-              }
-                
-            }else if(s.charAt(0) == 'r') {
-                String[] tabString = s.split(":");
-                if(tabString.length>1 && tabString[1]!="") {
-                    names.put(PlayerId.values()[i], tabString[1]);
-                }else {
-                    names.put(PlayerId.values()[i], defaultNames[i]);
-                }
 
-                String hostName= tabString.length==3? tabString[2]: "localhost";  
-                players.put(PlayerId.values()[i], new RemotePlayerClient(hostName));
-                
+        int counterOfMcts=0;
+        for (int i=0 ; i<arguments.size() ; i++) {
+            String argument = arguments.get(i);
+            String[] argSeparator = argument.split(":");
+
+            if(argument.charAt(0)=='h') {
+                players.put(PlayerId.values()[i], new GraphicalPlayerAdapter());
+                setName(argSeparator , i , names , defaultNames);
+            }
+
+            else if(argument.charAt(0)=='s') {
+                counterOfMcts++;
+                int iterations = argSeparator.length==3 ? Integer.parseInt(argSeparator[2]) : defaultIterations;
+                players.put(PlayerId.values()[i],
+                        new PacedPlayer(new MctsPlayer(PlayerId.values()[i],seeds[counterOfMcts],iterations), minTime));
+                setName(argSeparator , i , names , defaultNames);
+            } 
+
+            else if(argument.charAt(0) == 'r') {
+                setName(argSeparator , i , names , defaultNames);
+                String hostName= argSeparator.length==3? argSeparator[2]: defaultHost;  
+                players.put(PlayerId.values()[i], new RemotePlayerClient(hostName));                
             }
         }
 
-        //FIL D'EXECUTION
+        // FIL D'EXECUTION
         Thread gameThread = new Thread(() -> {
             JassGame g = new JassGame(seeds[0], players, names);
             while (! g.isGameOver()) {
@@ -131,47 +114,60 @@ public final class LocalMain extends Application {
         gameThread.start();
     }
 
-    private int numberOfArgument (String s) {
-        return s.split(":").length;
-    }
+    //Retourne vrai si aucune erreur n'est signalée sinon retourne faux avec
+    //le message correspondant
+    private Pair <Boolean, String > checkArgument (String s,int i) {
+        char playerType = s.charAt(0);
+        String[] argSeparator = s.split(":");
+        String defaultHost = "localHost";
 
-    private Pair <Boolean, String > checkNames (String s,int i) {
-        //TODO replace i with i+1
-        char type = s.charAt(0);
-        if(type!='s' && type!='h' && type!='r') {
-            return new Pair<>(false, "Erreur : type du joueur invalide dans le joueur "+i );
+        if(playerType!='s' && playerType!='h' && playerType!='r') {
+            return new Pair<>(false, "Erreur : type du joueur invalide dans le joueur "+(i+1) );
         }
-        if (numberOfArgument (s)>3) return new Pair<>(false, "Erreur : nombre d'arguments invalide dans le joueur "+i);
-        if (s.charAt(0)=='h') {
-            if(numberOfArgument (s)>2) {
-                return new Pair<>(false, "Erreur : nombre d'arguments invalide dans le joueur humain "+i);
+        if (argSeparator.length>3) return new Pair<>(false, "Erreur : nombre d'arguments invalide dans le joueur "+(i+1));
+
+        if (playerType=='h') {
+            if(argSeparator.length>2) {
+                return new Pair<>(false, "Erreur : nombre d'arguments invalide dans le joueur humain "+(i+1));
             }
         } 
-        if (s.charAt(0)=='s') {
-            String [] tab= s.split(":");
-            if (tab.length==3) 
-            try {
-                int iteration = Integer.parseInt(tab[2]);
-                if (iteration <10 ) {
-                    return new Pair<>(false, "Erreur : nombre d'itérations trop petit dans le joueur simule "+i);
-                }
-            }// fin try
-            catch (NumberFormatException e) {
-                return new Pair<>(false, "Erreur : nombre d'itérations invalide dans le joueur simule "+i);
-            }//fin catch
 
-        }// fin if joueur simulé
-        if (s.charAt(0)=='r') {
+        if (playerType=='s') {
+            if (argSeparator.length==3) 
+                try {
+                    int iterations = Integer.parseInt(argSeparator[2]);
+                    if (iterations <10 ) {
+                        return new Pair<>(false, "Erreur : nombre d'itérations trop petit dans le joueur simule "+(i+1));
+                    }
+                }
+            catch (NumberFormatException e) {
+                return new Pair<>(false, "Erreur : nombre d'itérations invalide dans le joueur simule "+(i+1));
+            }
+
+        }
+
+        if (playerType=='r') {
             try {
-                //TODO Find how to do dis
-                
-            }catch(IOError e) {
-                return new Pair<>(false, "Erreur : erreur de connexion du joueur distant "+i);
+               String hostName= argSeparator.length==3? argSeparator[2]: defaultHost;
+               RemotePlayerClient checkRemoteClient = new  RemotePlayerClient(hostName);
+               checkRemoteClient.close();
+               
+            }catch(IOException e) {
+                return new Pair<>(false, "Erreur : erreur de connexion du joueur distant "+(i+1));
             }
         }
-        return new Pair <>(true,"" )  ; 
+
+        return new Pair <>(true,"")  ; 
     }
-    
+    // Set the name of the player 
+    private void setName(String[] argSeparator , int counter ,  Map<PlayerId, String> names ,String[] defaultNames ) {
+        if(argSeparator.length==2 && argSeparator[1]!="") {
+            names.put(PlayerId.values()[counter], argSeparator[1]);
+        }else {
+            names.put(PlayerId.values()[counter], defaultNames[counter]);
+        }
+    }
+    //Retourne le nombre de joueurs simulés
     private int numberOfMctsPlayers(List<String> list) {
         int nb=0;
         for (int i=0 ; i<list.size() ; i++) {
@@ -181,5 +177,21 @@ public final class LocalMain extends Application {
         }
         return nb;
     }
-
+    //Vérifie que la graine donnée est valide
+    private void checkSeed(String s) {
+        try {
+            Long.parseLong(s);
+        }
+        catch (NumberFormatException e) {
+            System.err.println("Erreur : la graine aléatoire n'est pas un long valide ");
+            System.exit(1);
+        }
+    }
+    private void showHelpMessage() {
+        System.out.println("Utilisation: java ch.epfl.javass.LocalMain <j1>…<j4> [<graine>]\n" + 
+                "où :\n" + 
+                "<jn> spécifie le joueur n, ainsi:\n" + 
+                "  h:<nom>  un joueur humain nommé <nom>\n" + 
+                "…");
+    }
 }
