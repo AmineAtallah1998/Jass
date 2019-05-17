@@ -88,10 +88,13 @@ public final class RemotePlayerClient implements Player, AutoCloseable {
     @Override
     public void setPlayers(PlayerId ownId, Map<PlayerId, String> playerNames) {
         try {
+            String[] playerNamesSerialized = new String[playerNames.size()];
+            for (int i=0 ; i<playerNamesSerialized.length; i++) {
+                playerNamesSerialized[i] = StringSerializer.serializeString(playerNames.get(PlayerId.values()[i]));
+            }
             w.write(StringSerializer.combine(' ', "PLRS",
                     StringSerializer.serializeInt(ownId.ordinal()),
-                    StringSerializer.combine(',', playerNames.values()
-                            .toArray(new String[playerNames.size()]))));
+                    StringSerializer.combine(',', playerNamesSerialized) ));
             newLineAndFlush();
         } catch (IOException e) {
             throw new UncheckedIOException(e);

@@ -1,8 +1,6 @@
 package ch.epfl.javass;
 
-import ch.epfl.javass.jass.MctsPlayer;
-import ch.epfl.javass.jass.PacedPlayer;
-import ch.epfl.javass.jass.PlayerId;
+import ch.epfl.javass.gui.GraphicalPlayerAdapter;
 import ch.epfl.javass.net.RemotePlayerServer;
 import javafx.application.Application;
 import javafx.stage.Stage;
@@ -22,7 +20,7 @@ public final class RemoteMain extends Application {
      */
     @Override
     public void start(Stage primaryStage) throws Exception {
-        RemotePlayerServer server = new RemotePlayerServer(new PacedPlayer(new MctsPlayer(PlayerId.PLAYER_3 , 200, 2000),2));
+        RemotePlayerServer server = new RemotePlayerServer(new GraphicalPlayerAdapter());
         Thread remoteThread = new Thread(()-> {
             server.run();
         });

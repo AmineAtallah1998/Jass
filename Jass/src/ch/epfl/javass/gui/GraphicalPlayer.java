@@ -48,7 +48,7 @@ public final class GraphicalPlayer {
      * @param playerNames
      * @param beanScore
      * @param beanTrick
-     * crée les panneaux et les imbirque les uns aux autres
+     * crée les panneaux et les imbrique les uns aux autres
      */
     public GraphicalPlayer(PlayerId player, Map<PlayerId , String> playerNames,
             ScoreBean beanScore, TrickBean beanTrick, HandBean beanHand, BlockingQueue<Card> queue) {
@@ -73,6 +73,7 @@ public final class GraphicalPlayer {
         Stage stage = new Stage();
         stage.setScene(scene);
         stage.setTitle("Javass - "+playerNames.get(player));
+        stage.setMaxHeight(900); //TODO need to delete this
         return stage;
     }
 

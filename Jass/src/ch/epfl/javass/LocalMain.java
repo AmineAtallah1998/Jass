@@ -36,14 +36,15 @@ public final class LocalMain extends Application {
         System.out.println("GO!!");
         String[] defaultNames = { "Aline", "Bastien", "Colette" , "David"};
         int defaultIterations = 10_000;
-        String defaultHost = "localHost";
+        String defaultHost = "localhost";
         int minTime = 2;
         Random seed = null;
         List<String> arguments = getParameters().getRaw();
-
-        // GESTION DES ERREURS TODO show utilisation
+        
+        // TODO show utilisation
+        // GESTION DES ERREURS 
         if (arguments.size() > 5 || arguments.size() < 4) {
-            System.err.println("Error: nombre de paramateres incorrect");
+            showHelpMessage();
             System.exit(1);
         } else if (arguments.size() == 5) {
             checkSeed(arguments.get(4));
@@ -66,6 +67,7 @@ public final class LocalMain extends Application {
             }
         }
 
+        //TODO change to always 5 seeds
         // GENERATION DES GRAINES ALEATOIRES
         long[] seeds = new long[1+numberOfMctsPlayers(arguments)];
         for (int i=0 ; i< seeds.length ; i++) {
@@ -98,7 +100,12 @@ public final class LocalMain extends Application {
             else if(argument.charAt(0) == 'r') {
                 setName(argSeparator , i , names , defaultNames);
                 String hostName= argSeparator.length==3? argSeparator[2]: defaultHost;  
-                players.put(PlayerId.values()[i], new RemotePlayerClient(hostName));                
+                try {
+                players.put(PlayerId.values()[i], new RemotePlayerClient(hostName));   
+                } catch (IOException e) {
+                    System.out.println("Erreur de connexion pour le joueur distant "+(i+1));
+                    System.exit(1);
+                }
             }
         }
 
@@ -119,7 +126,6 @@ public final class LocalMain extends Application {
     private Pair <Boolean, String > checkArgument (String s,int i) {
         char playerType = s.charAt(0);
         String[] argSeparator = s.split(":");
-        String defaultHost = "localHost";
 
         if(playerType!='s' && playerType!='h' && playerType!='r') {
             return new Pair<>(false, "Erreur : type du joueur invalide dans le joueur "+(i+1) );
@@ -145,18 +151,7 @@ public final class LocalMain extends Application {
             }
 
         }
-
-        if (playerType=='r') {
-            try {
-               String hostName= argSeparator.length==3? argSeparator[2]: defaultHost;
-               RemotePlayerClient checkRemoteClient = new  RemotePlayerClient(hostName);
-               checkRemoteClient.close();
-               
-            }catch(IOException e) {
-                return new Pair<>(false, "Erreur : erreur de connexion du joueur distant "+(i+1));
-            }
-        }
-
+        
         return new Pair <>(true,"")  ; 
     }
     // Set the name of the player 
@@ -188,7 +183,7 @@ public final class LocalMain extends Application {
         }
     }
     private void showHelpMessage() {
-        System.out.println("Utilisation: java ch.epfl.javass.LocalMain <j1>…<j4> [<graine>]\n" + 
+        System.err.println("Utilisation: java ch.epfl.javass.LocalMain <j1>…<j4> [<graine>]\n" + 
                 "où :\n" + 
                 "<jn> spécifie le joueur n, ainsi:\n" + 
                 "  h:<nom>  un joueur humain nommé <nom>\n" + 
