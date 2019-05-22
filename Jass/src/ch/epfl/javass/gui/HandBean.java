@@ -12,6 +12,8 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
 
 /**
+ * HandBean : bean JavaFX doté de deux propriétés qui sont la main du joueur et son sous-ensemble qui sont les cartes jouables
+ * 
  * @author Mohamed Ali Dhraief (283509)
  * @author Amine Atallah (284592)
  */
@@ -72,7 +74,7 @@ public final class HandBean {
     private ObservableList<Card> initHand() {
         List<Card> cards = new ArrayList<>();
         ObservableList<Card> init = FXCollections.observableArrayList();
-        for (int i = 0; i < 9; i++) {
+        for (int i = 0; i < Card.Rank.COUNT; i++) {
             cards.add(null);
         }
         init.addAll(cards);

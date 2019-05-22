@@ -28,9 +28,10 @@ import ch.epfl.javass.jass.TurnState;
  */
 public final class RemotePlayerClient implements Player, AutoCloseable {
 
-    private Socket s;
-    private BufferedReader r;
-    private BufferedWriter w;
+    private final Socket socket;
+    private final BufferedReader reader;
+    private final BufferedWriter writer;
+    private final int TCP_PORT = 5108;
 
     /**
      * Constructeur de RemotePlayerClient
@@ -41,11 +42,11 @@ public final class RemotePlayerClient implements Player, AutoCloseable {
      * @throws IOException
      */
     public RemotePlayerClient(String hostName) throws IOException {
-        s = new Socket(hostName, 5108);
-        r = new BufferedReader(
-                new InputStreamReader(s.getInputStream(), US_ASCII));
-        w = new BufferedWriter(
-                new OutputStreamWriter(s.getOutputStream(), US_ASCII));
+        socket = new Socket(hostName, TCP_PORT);
+        reader = new BufferedReader(
+                new InputStreamReader(socket.getInputStream(), US_ASCII));
+        writer = new BufferedWriter(
+                new OutputStreamWriter(socket.getOutputStream(), US_ASCII));
     }
 
     /*
@@ -53,9 +54,9 @@ public final class RemotePlayerClient implements Player, AutoCloseable {
      */
     @Override
     public void close() throws IOException {
-        s.close();
-        w.close();
-        r.close();
+        socket.close();
+        writer.close();
+        reader.close();
     }
 
     /*
@@ -66,7 +67,7 @@ public final class RemotePlayerClient implements Player, AutoCloseable {
     public Card cardToPlay(TurnState state, CardSet hand) {
         Card card;
         try {
-            w.write(StringSerializer.combine(' ', "CARD",
+            writer.write(StringSerializer.combine(' ', JassCommand.CARD.name(),
                     StringSerializer.combine(',',
                             StringSerializer.serializeLong(state.packedScore()),
                             StringSerializer
@@ -74,7 +75,7 @@ public final class RemotePlayerClient implements Player, AutoCloseable {
                             StringSerializer.serializeInt(state.packedTrick())),
                     StringSerializer.serializeLong(hand.packed())));
             newLineAndFlush();
-            card = Card.ofPacked(StringSerializer.deserializeInt(r.readLine()));
+            card = Card.ofPacked(StringSerializer.deserializeInt(reader.readLine()));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -92,7 +93,7 @@ public final class RemotePlayerClient implements Player, AutoCloseable {
             for (int i=0 ; i<playerNamesSerialized.length; i++) {
                 playerNamesSerialized[i] = StringSerializer.serializeString(playerNames.get(PlayerId.values()[i]));
             }
-            w.write(StringSerializer.combine(' ', "PLRS",
+            writer.write(StringSerializer.combine(' ', JassCommand.PLRS.name(),
                     StringSerializer.serializeInt(ownId.ordinal()),
                     StringSerializer.combine(',', playerNamesSerialized) ));
             newLineAndFlush();
@@ -107,7 +108,7 @@ public final class RemotePlayerClient implements Player, AutoCloseable {
     @Override
     public void updateHand(CardSet newHand) {
         try {
-            w.write(StringSerializer.combine(' ', "HAND",
+            writer.write(StringSerializer.combine(' ', JassCommand.HAND.name(),
                     StringSerializer.serializeLong(newHand.packed())));
             newLineAndFlush();
         } catch (IOException e) {
@@ -121,7 +122,7 @@ public final class RemotePlayerClient implements Player, AutoCloseable {
     @Override
     public void setTrump(Color trump) {
         try {
-            w.write(StringSerializer.combine(' ', "TRMP",
+            writer.write(StringSerializer.combine(' ', JassCommand.TRMP.name(),
                     StringSerializer.serializeInt(trump.ordinal())));
             newLineAndFlush();
         } catch (IOException e) {
@@ -135,7 +136,7 @@ public final class RemotePlayerClient implements Player, AutoCloseable {
     @Override
     public void updateTrick(Trick newTrick) {
         try {
-            w.write(StringSerializer.combine(' ', "TRCK",
+            writer.write(StringSerializer.combine(' ', JassCommand.TRCK.name(),
                     StringSerializer.serializeInt(newTrick.packed())));
             newLineAndFlush();
         } catch (IOException e) {
@@ -149,7 +150,7 @@ public final class RemotePlayerClient implements Player, AutoCloseable {
     @Override
     public void updateScore(Score score) {
         try {
-            w.write(StringSerializer.combine(' ', "SCOR",
+            writer.write(StringSerializer.combine(' ', JassCommand.SCOR.name(),
                     StringSerializer.serializeLong(score.packed())));
             newLineAndFlush();
         } catch (IOException e) {
@@ -164,7 +165,7 @@ public final class RemotePlayerClient implements Player, AutoCloseable {
     @Override
     public void setWinningTeam(TeamId winningTeam) {
         try {
-            w.write(StringSerializer.combine(' ', "WINR",
+            writer.write(StringSerializer.combine(' ', JassCommand.WINR.name(),
                     StringSerializer.serializeInt(winningTeam.ordinal())));
             newLineAndFlush();
         } catch (IOException e) {
@@ -173,8 +174,8 @@ public final class RemotePlayerClient implements Player, AutoCloseable {
     }
 
     private void newLineAndFlush() throws IOException {
-        w.write('\n');
-        w.flush();
+        writer.write('\n');
+        writer.flush();
     }
 
 }

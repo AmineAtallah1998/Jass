@@ -54,7 +54,7 @@ public final class StringSerializer {
 
     /**
      * @param s
-     *            : chaine à sérializer en une autre chaine
+     *            : chaine à sérializer en une autre chaine selon la convention UTF_8
      * @return chaine après sérialization de la chaine donnée en argument
      */
     public static String serializeString(String s) {

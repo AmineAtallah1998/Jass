@@ -11,6 +11,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
 
 /**
+ * TrickBean: bean JavaFX contenant le pli courant
+ * 
  * @author Mohamed Ali Dhraief (283509)
  * @author Amine Atallah (284592)
  *
@@ -49,10 +51,12 @@ public final class TrickBean {
      *            correspendants et null aux joueurs qui n'ont pas joué
      */
     public void setTrick(Trick newTrick) {
-        if (!newTrick.isEmpty())
+        if (!newTrick.isEmpty()) {
             winningPlayerProperty.set(newTrick.winningPlayer());
-        else
+        } else {
             winningPlayerProperty.set(null);
+        }
+
         trick.clear();
         for (int i = 0; i < newTrick.size(); i++) {
             trick.put(newTrick.player(i), newTrick.card(i));

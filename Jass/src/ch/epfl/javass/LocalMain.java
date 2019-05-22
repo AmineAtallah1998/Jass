@@ -33,7 +33,6 @@ public final class LocalMain extends Application {
      */
     @Override                            
     public void start(Stage primaryStage) throws Exception {
-        System.out.println("GO!!");
         String[] defaultNames = { "Aline", "Bastien", "Colette" , "David"};
         int defaultIterations = 10_000;
         String defaultHost = "localhost";
@@ -66,10 +65,8 @@ public final class LocalMain extends Application {
                 }
             }
         }
-
-        //TODO change to always 5 seeds
         // GENERATION DES GRAINES ALEATOIRES
-        long[] seeds = new long[1+numberOfMctsPlayers(arguments)];
+        long[] seeds = new long[5];
         for (int i=0 ; i< seeds.length ; i++) {
             seeds[i]=seed.nextLong();
         }
@@ -79,7 +76,6 @@ public final class LocalMain extends Application {
         Map<PlayerId, Player> players = new EnumMap<>(PlayerId.class);
         Map<PlayerId, String> names = new EnumMap<>(PlayerId.class);
 
-        int counterOfMcts=0;
         for (int i=0 ; i<arguments.size() ; i++) {
             String argument = arguments.get(i);
             String[] argSeparator = argument.split(":");
@@ -90,10 +86,10 @@ public final class LocalMain extends Application {
             }
 
             else if(argument.charAt(0)=='s') {
-                counterOfMcts++;
+
                 int iterations = argSeparator.length==3 ? Integer.parseInt(argSeparator[2]) : defaultIterations;
                 players.put(PlayerId.values()[i],
-                        new PacedPlayer(new MctsPlayer(PlayerId.values()[i],seeds[counterOfMcts],iterations), minTime));
+                        new PacedPlayer(new MctsPlayer(PlayerId.values()[i],seeds[i+1],iterations), minTime));
                 setName(argSeparator , i , names , defaultNames);
             } 
 
@@ -103,7 +99,7 @@ public final class LocalMain extends Application {
                 try {
                 players.put(PlayerId.values()[i], new RemotePlayerClient(hostName));   
                 } catch (IOException e) {
-                    System.out.println("Erreur de connexion pour le joueur distant "+(i+1));
+                    System.err.println("Erreur de connexion pour le joueur distant "+(i+1));
                     System.exit(1);
                 }
             }
@@ -121,11 +117,13 @@ public final class LocalMain extends Application {
         gameThread.start();
     }
 
-    //Retourne vrai si aucune erreur n'est signalée sinon retourne faux avec
-    //le message correspondant
+    //Retourne la paire (true,"")  si aucune erreur n'est signalée sinon retourne faux avec
+    //le message correspondant (false, ErrorMessage)
     private Pair <Boolean, String > checkArgument (String s,int i) {
+        int minIterations = 10;
         char playerType = s.charAt(0);
         String[] argSeparator = s.split(":");
+        
 
         if(playerType!='s' && playerType!='h' && playerType!='r') {
             return new Pair<>(false, "Erreur : type du joueur invalide dans le joueur "+(i+1) );
@@ -142,7 +140,7 @@ public final class LocalMain extends Application {
             if (argSeparator.length==3) 
                 try {
                     int iterations = Integer.parseInt(argSeparator[2]);
-                    if (iterations <10 ) {
+                    if (iterations < minIterations ) {
                         return new Pair<>(false, "Erreur : nombre d'itérations trop petit dans le joueur simule "+(i+1));
                     }
                 }
@@ -152,26 +150,17 @@ public final class LocalMain extends Application {
 
         }
         
-        return new Pair <>(true,"")  ; 
+        return new Pair <>(true,""); 
     }
     // Set the name of the player 
     private void setName(String[] argSeparator , int counter ,  Map<PlayerId, String> names ,String[] defaultNames ) {
-        if(argSeparator.length==2 && argSeparator[1]!="") {
+        if(argSeparator.length>=2 && argSeparator[1]!="") {
             names.put(PlayerId.values()[counter], argSeparator[1]);
         }else {
             names.put(PlayerId.values()[counter], defaultNames[counter]);
         }
     }
-    //Retourne le nombre de joueurs simulés
-    private int numberOfMctsPlayers(List<String> list) {
-        int nb=0;
-        for (int i=0 ; i<list.size() ; i++) {
-            if(list.get(i).contains("s")) {
-                nb++;
-            }
-        }
-        return nb;
-    }
+    
     //Vérifie que la graine donnée est valide
     private void checkSeed(String s) {
         try {
@@ -183,10 +172,20 @@ public final class LocalMain extends Application {
         }
     }
     private void showHelpMessage() {
-        System.err.println("Utilisation: java ch.epfl.javass.LocalMain <j1>…<j4> [<graine>]\n" + 
-                "où :\n" + 
-                "<jn> spécifie le joueur n, ainsi:\n" + 
-                "  h:<nom>  un joueur humain nommé <nom>\n" + 
-                "…");
+        System.err.println("Utilisation: java ch.epfl.javass.LocalMain :\n"
+            +"Pour les arguments, on doit introduire les 4 joueurs, et une graine (optionnel) \n"
+           +" a) Chaque joueur est spécifier de la manière qui suit:\n"
+           +" 1) D'abord le type de joueur : h, s, r désigne respectivement humain, simulé et"
+           +" distant.\n"
+            +"2)Puis, il est possible d'insérer son nom sous la forme d une chaine. Dans "
+          +"  le cas échéant, un nom par défaut lui sera attribuer.\n"
+          +"  3) Il est possible d'introduire un troisième argument dans les deux cas suivants:\n"
+           +" - si le joueur est simulé, le troisième argument désigne le nombre d'itérations. "
+            +"Celle ci est par défaut fixé à 100 000.\n"
+           +" -si le joueur est distant, le troisième argument désigne l'adresse IP."
+            +"Celle-ci par défaut  est fixé à localhost\n"
+           +" Veuillez noter que au sein d'un joueur, les joueurs sont séparés par deux points "
+            +":\n"
+           +" b) Pour insérer une graine il suffit d'insérer un nombre qui soit un long valable");
     }
 }

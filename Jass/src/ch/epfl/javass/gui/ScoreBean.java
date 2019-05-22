@@ -11,15 +11,17 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
 /**
+ * ScoreBean: bean JavaFX contenant les scores
+ * 
  * @author Mohamed Ali Dhraief (283509)
  * @author Amine Atallah (284592)
  *
  */
 public final class ScoreBean {
     
-    private Map<TeamId , IntegerProperty> turnPointsProperty = getMap();
-    private Map<TeamId , IntegerProperty> gamePointsProperty = getMap();
-    private Map<TeamId , IntegerProperty> totalPointsProperty = getMap();
+    private Map<TeamId , IntegerProperty> turnPointsProperty = initializeMap();
+    private Map<TeamId , IntegerProperty> gamePointsProperty = initializeMap();
+    private Map<TeamId , IntegerProperty> totalPointsProperty = initializeMap();
     private ObjectProperty<TeamId> winningTeamProperty = new SimpleObjectProperty<>();
     
     /**
@@ -88,11 +90,11 @@ public final class ScoreBean {
         winningTeamProperty.set(winningTeam);
     }
     //Initialize la map 
-    private  Map<TeamId , IntegerProperty>  getMap () {
-        Map<TeamId , IntegerProperty>  res= new HashMap<>();
-        for ( int i =0; i<2;i++) {
-            res.put(TeamId.values()[i], new SimpleIntegerProperty());
+    private  Map<TeamId , IntegerProperty>  initializeMap () {
+        Map<TeamId , IntegerProperty>  map= new HashMap<>();
+        for ( int i =0; i<TeamId.COUNT;i++) {
+            map.put(TeamId.values()[i], new SimpleIntegerProperty());
         }
-        return res;
+        return map;
     }
 }

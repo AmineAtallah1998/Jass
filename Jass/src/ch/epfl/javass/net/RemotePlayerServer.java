@@ -31,6 +31,7 @@ import ch.epfl.javass.jass.TurnState;
  */
 public final class RemotePlayerServer {
     private final Player player;
+    private final int TCP_PORT = 5108;
 
     /**
      * constructeur public auquel on passe le joueur local
@@ -47,43 +48,41 @@ public final class RemotePlayerServer {
      * local dans le cas de cardToPlay, renvoie la valeur de retour au client
      */
     public void run() {
-        try (ServerSocket s0 = new ServerSocket(5108);
+        try (ServerSocket s0 = new ServerSocket(TCP_PORT);
                 Socket s = s0.accept();
                 BufferedReader r = new BufferedReader(
                         new InputStreamReader(s.getInputStream(), US_ASCII));
                 BufferedWriter w = new BufferedWriter(new OutputStreamWriter(
                         s.getOutputStream(), US_ASCII))) {
-            String string = r.readLine();
-            while (string != null) {
+            String line = r.readLine();
+            while (line != null) {
 
-                String[] tab = StringSerializer.split(' ', string);
-                switch (JassCommand.valueOf(tab[0])) {
+                String[] tabLine = StringSerializer.split(' ', line);
+                switch (JassCommand.valueOf(tabLine[0])) {
                 case TRMP:
                     player.setTrump(Card.Color.values()[StringSerializer
-                            .deserializeInt(tab[1])]);
-
+                            .deserializeInt(tabLine[1])]);
                     break;
                 case HAND:
                     player.updateHand(CardSet.ofPacked(
-                            StringSerializer.deserializeLong(tab[1])));
+                            StringSerializer.deserializeLong(tabLine[1])));
                     break;
                 case SCOR:
                     player.updateScore(Score.ofPacked(
-                            StringSerializer.deserializeLong(tab[1])));
+                            StringSerializer.deserializeLong(tabLine[1])));
                     break;
                 case TRCK:
                     player.updateTrick(Trick
-                            .ofPacked(StringSerializer.deserializeInt(tab[1])));
+                            .ofPacked(StringSerializer.deserializeInt(tabLine[1])));
                     break;
                 case WINR:
                     player.setWinningTeam(TeamId.values()[StringSerializer
-                            .deserializeInt(tab[1])]);
+                            .deserializeInt(tabLine[1])]);
                     break;
-
                 case PLRS:
                     PlayerId ownId = PlayerId.values()[StringSerializer
-                            .deserializeInt(tab[1])];
-                    String[] players = StringSerializer.split(',', tab[2]);
+                            .deserializeInt(tabLine[1])];
+                    String[] players = StringSerializer.split(',', tabLine[2]);
                     Map<PlayerId, String> map = new EnumMap<>(PlayerId.class);
                     for (int i = 0; i < players.length; i++) {
                         map.put(PlayerId.values()[i],
@@ -91,12 +90,11 @@ public final class RemotePlayerServer {
                     }
                     player.setPlayers(ownId, map);
                     break;
-
                 case CARD:
                     CardSet hand = CardSet
-                            .ofPacked(StringSerializer.deserializeLong(tab[2]));
+                            .ofPacked(StringSerializer.deserializeLong(tabLine[2]));
                     String[] stateArguments = StringSerializer.split(',',
-                            tab[1]);
+                            tabLine[1]);
                     TurnState state = TurnState.ofPackedComponents(
                             StringSerializer.deserializeLong(stateArguments[0]),
                             StringSerializer.deserializeLong(stateArguments[1]),
@@ -107,15 +105,11 @@ public final class RemotePlayerServer {
                     w.write('\n');
                     w.flush();
                     break;
-
                 }
-
-                string = r.readLine();
+                line = r.readLine();
             }
-
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-
     }
 }
