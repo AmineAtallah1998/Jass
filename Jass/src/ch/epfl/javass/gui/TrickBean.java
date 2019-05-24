@@ -19,10 +19,10 @@ import javafx.collections.ObservableMap;
  */
 public final class TrickBean {
 
-    private ObservableMap<PlayerId, Card> trick = FXCollections
+    private final ObservableMap<PlayerId, Card> trick = FXCollections
             .observableHashMap();
-    private ObjectProperty<Color> trumpProperty = new SimpleObjectProperty<>();
-    private ObjectProperty<PlayerId> winningPlayerProperty = new SimpleObjectProperty<>();
+    private final ObjectProperty<Color> trumpProperty = new SimpleObjectProperty<>();
+    private final ObjectProperty<PlayerId> winningPlayerProperty = new SimpleObjectProperty<>();
 
     /**
      * @return la propriété de l'atout

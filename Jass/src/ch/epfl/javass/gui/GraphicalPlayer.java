@@ -40,7 +40,7 @@ import javafx.stage.Stage;
 public final class GraphicalPlayer {
     private final Map<PlayerId, String> playerNames;
     private final PlayerId player;
-    private Scene scene;
+    private final Scene scene;
     private final ObservableMap<Card, Image> observableMap = getMapCard();
     private final ObservableMap<Color, Image> observableMapTrump = getMapTrump();
     private final int WIDTH_HAND = 80;
@@ -69,7 +69,6 @@ public final class GraphicalPlayer {
         BorderPane pane = new BorderPane(trickPane, scorePane, null, handPane,
                 null);
         StackPane mainPane = new StackPane();
-
         mainPane.getChildren().add(pane);
         mainPane.getChildren().addAll(createVictoryPanes(beanScore));
         scene = new Scene(mainPane);
@@ -82,13 +81,6 @@ public final class GraphicalPlayer {
         Stage stage = new Stage();
         stage.setScene(scene);
         stage.setTitle("Javass - " + playerNames.get(player));
-        stage.setMaxHeight(900);
-        /*
-         * Cette instruction a été faite pour adapter le graphique a notre
-         * ordinateur. Ne sachant pas le type de votre ordinateur, nous avons
-         * laissé cette instruction. Au cas où votre ordinateur permet
-         * d'afficher la partie du score, veuillez enlever cette instruction.
-         */
         return stage;
     }
 
@@ -245,8 +237,13 @@ public final class GraphicalPlayer {
         StackPane paneStack = new StackPane();
         halo.visibleProperty().bind(tb.winningPlayerProperty().isEqualTo(p));
         paneStack.getChildren().addAll(halo, imageCardLeft);
-
-        VBox nodeCardName = new VBox(leftCard, paneStack);
+        VBox nodeCardName = null;
+        if(p==player) {
+             nodeCardName = new VBox(paneStack, leftCard);
+        }else {
+             nodeCardName = new VBox(leftCard, paneStack);
+        }
+        
         nodeCardName.setAlignment(value);
         return nodeCardName;
     }

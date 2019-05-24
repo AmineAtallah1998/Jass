@@ -28,7 +28,7 @@ public final class GraphicalPlayerAdapter implements Player {
     private final ScoreBean scoreBean = new ScoreBean();
     private final TrickBean trickBean = new TrickBean();
     private final HandBean handBean = new HandBean();
-    private BlockingQueue<Card> queue = new ArrayBlockingQueue<Card>(1);
+    private final BlockingQueue<Card> queue = new ArrayBlockingQueue<Card>(1);
     private GraphicalPlayer graphicalPlayer;
 
     /*

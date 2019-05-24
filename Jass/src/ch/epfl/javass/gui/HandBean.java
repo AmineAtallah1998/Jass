@@ -19,8 +19,8 @@ import javafx.collections.ObservableSet;
  */
 public final class HandBean {
 
-    private ObservableList<Card> hand = initHand();
-    private ObservableSet<Card> playableCards = FXCollections.observableSet();
+    private final ObservableList<Card> hand = initHand();
+    private final ObservableSet<Card> playableCards = FXCollections.observableSet();
 
     /**
      * @param newHand

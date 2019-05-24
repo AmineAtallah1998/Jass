@@ -19,10 +19,10 @@ import javafx.beans.property.SimpleObjectProperty;
  */
 public final class ScoreBean {
     
-    private Map<TeamId , IntegerProperty> turnPointsProperty = initializeMap();
-    private Map<TeamId , IntegerProperty> gamePointsProperty = initializeMap();
-    private Map<TeamId , IntegerProperty> totalPointsProperty = initializeMap();
-    private ObjectProperty<TeamId> winningTeamProperty = new SimpleObjectProperty<>();
+    private final Map<TeamId , IntegerProperty> turnPointsProperty = initializeMap();
+    private final Map<TeamId , IntegerProperty> gamePointsProperty = initializeMap();
+    private final Map<TeamId , IntegerProperty> totalPointsProperty = initializeMap();
+    private final ObjectProperty<TeamId> winningTeamProperty = new SimpleObjectProperty<>();
     
     /**
      * @param team
