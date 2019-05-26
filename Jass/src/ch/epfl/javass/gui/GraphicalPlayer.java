@@ -48,7 +48,7 @@ public final class GraphicalPlayer {
     private final int TRUMP_DIMENSIONS = 101;
     private final int WIDTH_CARD = 120;
     private final int HEIGHT_CARD = 180;
-
+    
     /**
      * @param player
      * @param playerNames
@@ -62,16 +62,16 @@ public final class GraphicalPlayer {
 
         this.playerNames = playerNames;
         this.player = player;
-
         GridPane scorePane = createScorePane(beanScore);
         GridPane trickPane = createTrickPane(beanTrick);
         HBox handPane = createHandPane(beanHand, queue);
         BorderPane pane = new BorderPane(trickPane, scorePane, null, handPane,
-                null);
+                null);       
         StackPane mainPane = new StackPane();
         mainPane.getChildren().add(pane);
         mainPane.getChildren().addAll(createVictoryPanes(beanScore));
         scene = new Scene(mainPane);
+    
     }
 
     /**
@@ -81,13 +81,18 @@ public final class GraphicalPlayer {
         Stage stage = new Stage();
         stage.setScene(scene);
         stage.setTitle("Javass - " + playerNames.get(player));
+        stage.setMaxHeight(900);
         return stage;
     }
 
     private HBox createHandPane(HandBean hb, BlockingQueue<Card> queue) {
         HBox handPane = new HBox();
-        handPane.setStyle("-fx-background-color: lightgray;\n"
+        handPane.setStyle("-fx-background-image: url(\"bois.jpg\");\n" + 
+                "-fx-background-repeat: stretch;\n" + 
+                "-fx-background-size: 1500 150;\n" + 
+                "-fx-background-position: center center;\n"
                 + "-fx-spacing: 5px;\n" + "-fx-padding: 5px;");
+        handPane.setAlignment(Pos.CENTER);
 
         for (int i = 0; i < Jass.HAND_SIZE; i++) {
             int s = i; // crée uniquement pour utilisation dans l'expression
@@ -114,10 +119,8 @@ public final class GraphicalPlayer {
             card.opacityProperty()
                     .bind(Bindings.when(isPlayable).then(1).otherwise(0.2));
             card.disableProperty().bind(isPlayable.not());
-
             handPane.getChildren().add(card);
         }
-
         return handPane;
     }
 
@@ -129,7 +132,7 @@ public final class GraphicalPlayer {
         return res;
     }
 
-    // create le texte du score et fais les Bindings nécessaire
+    // cree le texte du score et fais les liaisons nécessaire
     private Text turnScoreCreator(TeamId t, ScoreBean sb) {
         Text turnScore = new Text();
         turnScore.textProperty()
@@ -138,7 +141,7 @@ public final class GraphicalPlayer {
         return turnScore;
     }
 
-    // create le texte du jeu et fais les Bindings nécessaire
+    // cree le texte du jeu et fais les liaisons nécessaire
     private Text gamePointsCreator(TeamId t, ScoreBean sb) {
         Text gamePoints = new Text();
         gamePoints.setTextAlignment(TextAlignment.RIGHT);
@@ -147,7 +150,7 @@ public final class GraphicalPlayer {
         return gamePoints;
     }
 
-    // //create le texte des différences de score et fais les Bindings
+    // cree le texte des différences de score et fais les liaisons
     // nécessaire
     private Text diffCreator(TeamId t, ScoreBean sb) {
         Text textDiff = new Text();
@@ -172,13 +175,13 @@ public final class GraphicalPlayer {
         scorePane.setStyle(
                 "-fx-font: 16 Optima;-fx-background-color: lightgray;-fx-padding: 5px;-fx-alignment: center;");
 
-        // NAMES x2
+        // noms x2
         Text names = nameCreator(PlayerId.PLAYER_1, PlayerId.PLAYER_3);
         Text names1 = nameCreator(PlayerId.PLAYER_2, PlayerId.PLAYER_4);
         scorePane.add(names, 0, 0);
         scorePane.add(names1, 0, 1);
 
-        // STRING TOTAL x2
+        // chaines "TOTAL" x2
         Text stringTotal = new Text(" /Total :");
         stringTotal.setTextAlignment(TextAlignment.LEFT);
         scorePane.add(stringTotal, 3, 0);
@@ -187,21 +190,21 @@ public final class GraphicalPlayer {
         stringTotal1.setTextAlignment(TextAlignment.LEFT);
         scorePane.add(stringTotal1, 3, 1);
 
-        // TURNSCORES
+        // scores du pli
         Text turnScore = turnScoreCreator(TeamId.TEAM_1, sb);
         scorePane.add(turnScore, 1, 0);
 
         Text turnScore1 = turnScoreCreator(TeamId.TEAM_2, sb);
         scorePane.add(turnScore1, 1, 1);
 
-        // GAMEPOINTS
+        // scores de la partie
         Text gamePoints = gamePointsCreator(TeamId.TEAM_1, sb);
         scorePane.add(gamePoints, 4, 0);
 
         Text gamePoints1 = gamePointsCreator(TeamId.TEAM_2, sb);
         scorePane.add(gamePoints1, 4, 1);
 
-        // DIFFERENCE
+        // difference
         Text textDiff = diffCreator(TeamId.TEAM_1, sb);
         scorePane.add(textDiff, 2, 0);
 
@@ -251,13 +254,15 @@ public final class GraphicalPlayer {
     // Panneau du pli
     private GridPane createTrickPane(TrickBean tb) {
 
-        GridPane trickPane = new GridPane();
-        trickPane.setStyle("-fx-background-color: whitesmoke;\n"
+        GridPane trickPane = new GridPane();       
+        trickPane.setStyle("-fx-background-image: url(\"tapis.jpg\");\n" + 
+                "-fx-background-repeat: stretch;\n" + 
+                "-fx-background-size: 2000 2000;\n" + 
+                "-fx-background-position: center center;\n"
                 + "-fx-padding: 5px;\n" + "-fx-border-width: 3px 0px;\n"
                 + "-fx-border-style: solid;\n" + "-fx-border-color: gray;\n"
                 + "-fx-alignment: center;");
-
-        // TRUMP
+        // ATOUT
         ImageView imageTrump = createTrump(tb);
         trickPane.add(imageTrump, 1, 1);
         GridPane.setHalignment(imageTrump, HPos.CENTER);
@@ -268,23 +273,23 @@ public final class GraphicalPlayer {
         Rectangle halo3 = getHalo();
         Rectangle halo4 = getHalo();
 
-        // CARD LEFT
+        // CARTE GAUCHE
         PlayerId p = player == PlayerId.PLAYER_1 ? PlayerId.PLAYER_4
                 : PlayerId.values()[player.ordinal() - 1];
         VBox nodeCardName = createCard(tb, halo, p, Pos.CENTER);
         trickPane.add(nodeCardName, 0, 1);
 
-        // CARD RIGHT
+        // CARTE DROITE
         PlayerId p2 = PlayerId.values()[(player.ordinal() + 1) % 4];
         VBox nodeCardName2 = createCard(tb, halo2, p2, Pos.CENTER);
         trickPane.add(nodeCardName2, 2, 1);
 
-        // CARD UP
+        // CARTE HAUT
         PlayerId p3 = PlayerId.values()[(p2.ordinal() + 1) % 4];
         VBox nodeCardName3 = createCard(tb, halo3, p3, Pos.CENTER);
         trickPane.add(nodeCardName3, 1, 0);
 
-        // CARD DOWN (GraphicalPlayer)
+        // CARTE BAS (GraphicalPlayer)
         VBox nodeCardName4 = createCard(tb, halo4, player, Pos.BOTTOM_CENTER);
         trickPane.add(nodeCardName4, 1, 2);
 
@@ -347,13 +352,13 @@ public final class GraphicalPlayer {
         return mapTrump;
     }
 
-    // retourne le string correspondant à l'URL de la carte donnée
+    // retourne la chaine correspondante à l'URL de la carte donnée
     private String getCardRef(Card card) {
         return "/card_" + card.color().ordinal() + "_" + card.rank().ordinal()
                 + "_" + "240.png";
     }
 
-    // retourne le string correspondant à l'URL de la couleur donnée
+    // retourne la chaine correspondante à l'URL de la couleur donnée
     private String getColorRef(Color color) {
         return "/trump_" + color.ordinal() + ".png";
     }

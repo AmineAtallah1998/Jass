@@ -50,6 +50,11 @@ public final class JassGame {
 		DealsTheCard();
 		firstPlayerOfGame = firstPlayerOfTrick();
 		tour = TurnState.initial(trumpChoose(), Score.INITIAL,firstPlayerOfGame);
+		setPlayers();
+        setTrump();
+        updatePli();
+        updateScore();
+        updateMain();
 	}
 
 	/**
@@ -60,11 +65,7 @@ public final class JassGame {
 
 		//Si c'est le premier pli de la partie
 		if (firstTrickOfGame) {
-			setPlayers();
-			setTrump();
-			updatePli();
-			updateScore();
-			updateMain();
+			
 			playsATrick(firstPlayerOfGame);
 			firstTrickOfGame = false;
 			firstTrickOfTurn = false;

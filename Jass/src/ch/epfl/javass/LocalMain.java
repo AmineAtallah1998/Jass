@@ -25,12 +25,12 @@ import javafx.util.Pair;
  */
 public final class LocalMain extends Application {
     private final String[] DEFAULT_NAMES = { "Aline", "Bastien", "Colette",
-            "David" };
+    "David" };
     private final int DEFAULT_ITERATIONS = 10_000;
     private final String DEFAULT_HOST = "localhost";
     private final int MINTIME = 2;
     private final int MIN_ITERATIONS = 10;
-
+    
     public static void main(String[] args) {
         launch(args);
     }
@@ -89,11 +89,11 @@ public final class LocalMain extends Application {
             else if (playerType == 's') {
                 int iterations = argSeparator.length == 3
                         ? Integer.parseInt(argSeparator[2])
-                        : DEFAULT_ITERATIONS;
-                players.put(PlayerId.values()[i],
-                        new PacedPlayer(new MctsPlayer(PlayerId.values()[i],
-                                seeds[i + 1], iterations), MINTIME));
-                setName(argSeparator, i, names, DEFAULT_NAMES);
+                                : DEFAULT_ITERATIONS;
+                        players.put(PlayerId.values()[i],
+                                new PacedPlayer(new MctsPlayer(PlayerId.values()[i],
+                                        seeds[i + 1], iterations), MINTIME));
+                        setName(argSeparator, i, names, DEFAULT_NAMES);
             } else if (playerType == 'r') {
                 setName(argSeparator, i, names, DEFAULT_NAMES);
                 String hostName = argSeparator.length == 3 ? argSeparator[2]
@@ -109,22 +109,27 @@ public final class LocalMain extends Application {
                 }
             }
         }
-
-        // FIL D'EXECUTION
-        Thread gameThread = new Thread(() -> {
-            JassGame g = new JassGame(seeds[0], players, names);
-            while (!g.isGameOver()) {
-                g.advanceToEndOfNextTrick();
-                try {
-                    Thread.sleep(1000);
-                } catch (Exception e) {
+        {
+            // FIL D'EXECUTION
+            Thread gameThread = new Thread(() -> {
+                JassGame g = new JassGame(seeds[0], players, names);
+                while (!g.isGameOver()) {
+                    g.advanceToEndOfNextTrick();
+                    try {
+                        Thread.sleep(1000);
+                    } catch (Exception e) {
+                        System.out.println("Exception");
+                    }
                 }
-            }
-        });
-        gameThread.setDaemon(true);
-        gameThread.start();
-    }
 
+            });
+           
+            gameThread.setDaemon(true);
+            gameThread.start();
+            }
+
+        
+    }
     // Retourne la paire (true,"") si aucune erreur n'est signalée sinon
     // retourne faux avec
     // le message correspondant (false, ErrorMessage)
@@ -167,7 +172,7 @@ public final class LocalMain extends Application {
         return new Pair<>(true, "");
     }
 
-    // Set the name of the player
+    // met le nom du joueur dans names
     private void setName(String[] argSeparator, int counter,
             Map<PlayerId, String> names, String[] defaultNames) {
         if (argSeparator.length >= 2 && argSeparator[1] != "") {

@@ -15,129 +15,110 @@ import ch.epfl.javass.jass.TurnState;
 import ch.epfl.javass.jass.Card.Color;
 import javafx.application.Platform;
 
-/**
- * GraphicalPlayerAdapter : adaptateur permettant d'adapter l'interface
- * graphique pour en faire un joueur
- * 
- * @author Mohamed Ali Dhraief (283509)
- * @author Amine Atallah (284592)
- *
- */
-public final class GraphicalPlayerAdapter implements Player {
-
-    private final ScoreBean scoreBean = new ScoreBean();
-    private final TrickBean trickBean = new TrickBean();
-    private final HandBean handBean = new HandBean();
-    private final BlockingQueue<Card> queue = new ArrayBlockingQueue<Card>(1);
+public final class GraphicalPlayerAdapter implements Player  {
+   
+    private ScoreBean scoreBean = new ScoreBean();
+    private TrickBean trickBean = new TrickBean();
+    private HandBean handBean = new HandBean();
+    private BlockingQueue <Card> queue = new ArrayBlockingQueue<Card> (1);
     private GraphicalPlayer graphicalPlayer;
 
-    /*
-     * @see ch.epfl.javass.jass.Player#cardToPlay(ch.epfl.javass.jass.TurnState,
-     * ch.epfl.javass.jass.CardSet)
-     */
+
+    
     @Override
     public Card cardToPlay(TurnState state, CardSet hand) {
-
-        Platform.runLater(() -> {
-            handBean.setPlayableCards(state.trick().playableCards(hand));
-        });
+        Platform.runLater( 
+                () -> { handBean.setPlayableCards(state.trick().playableCards(hand));}
+                );
 
         Card card = null;
         try {
             card = queue.take();
         } catch (InterruptedException e) {
-            throw new Error(e);
+            e.printStackTrace();
         }
 
-        Platform.runLater(() -> {
-            handBean.setPlayableCards(CardSet.EMPTY);
-        });
+        Platform.runLater( 
+                () -> { handBean.setPlayableCards(CardSet.EMPTY);}
+                );
 
         return card;
     }
 
+
+
     /**
      * informer le joueur qu'il a l'identité ownId et que les différents joueurs
-     * (lui inclus) sont nommés selon le contenu de la table associative
-     * playerNames
+     * (lui inclus) sont nommés selon le contenu de la table associative playerNames
      * 
-     * @param ownId
-     *            : identité du joueur
-     * @param playerNames
-     *            : noms des joueurs
+     * @param ownId       : identité du joueur
+     * @param playerNames : noms des joueurs
      */
     public void setPlayers(PlayerId ownId, Map<PlayerId, String> playerNames) {
-        graphicalPlayer = new GraphicalPlayer(ownId, playerNames, scoreBean,
-                trickBean, handBean, queue);
-        Platform.runLater(() -> {
-            graphicalPlayer.createStage().show();
-        });
+        graphicalPlayer= new GraphicalPlayer(ownId, playerNames, scoreBean  , trickBean, handBean , queue);
+       System.out.println("houni");
+        Platform.runLater(
+                () -> { graphicalPlayer.createStage().show(); }
+                );
+
     }
 
     /**
      * appelée chaque fois que la main du joueur change
      * 
-     * @param newHand
-     *            : main du joueur
+     * @param newHand : main du joueur
      */
     public void updateHand(CardSet newHand) {
-        Platform.runLater(() -> {
-            handBean.setHand(newHand);
-        });
+        Platform.runLater(
+                () -> {handBean.setHand(newHand);});
     }
 
     /**
      * appelée chaque fois que l'atout change
      * 
-     * @param trump
-     *            : atout
-     * @throws IOException
+     * @param trump : atout
+     * @throws IOException 
      */
-    public void setTrump(Color trump) {
-        Platform.runLater(() -> {
-            trickBean.setTrump(trump);
-        });
+    public void setTrump (Color trump){
+        Platform.runLater(
+                () -> {  trickBean.setTrump(trump);
+                });
     }
+
 
     /**
      * appelée chaque fois que le pli change
      * 
-     * @param newTrick
-     *            : pli
+     * @param newTrick : pli
      */
     public void updateTrick(Trick newTrick) {
-        Platform.runLater(() -> {
-            trickBean.setTrick(newTrick);
+        Platform.runLater(
+                () -> {  trickBean.setTrick(newTrick);
 
-        });
+                });
     }
+
 
     /**
      * appelée chaque fois que le score change
      * 
-     * @param score
-     *            : score des equipes
+     * @param score : score des equipes
      */
     public void updateScore(Score score) {
 
-        Platform.runLater(() -> {
+        Platform.runLater(
+                () -> { 
 
-            scoreBean.setTurnPoints(TeamId.TEAM_1,
-                    score.turnPoints(TeamId.TEAM_1));
-            scoreBean.setTurnPoints(TeamId.TEAM_2,
-                    score.turnPoints(TeamId.TEAM_2));
+                    scoreBean.setTurnPoints(TeamId.TEAM_1, score.turnPoints(TeamId.TEAM_1));   
+                    scoreBean.setTurnPoints(TeamId.TEAM_2, score.turnPoints(TeamId.TEAM_2));
 
-            scoreBean.setGamePoints(TeamId.TEAM_1,
-                    score.gamePoints(TeamId.TEAM_1));
-            scoreBean.setGamePoints(TeamId.TEAM_2,
-                    score.gamePoints(TeamId.TEAM_2));
+                    scoreBean.setGamePoints(TeamId.TEAM_1, score.gamePoints(TeamId.TEAM_1));   
+                    scoreBean.setGamePoints(TeamId.TEAM_2, score.gamePoints(TeamId.TEAM_2));   
 
-            scoreBean.setTotalPoints(TeamId.TEAM_1,
-                    score.totalPoints(TeamId.TEAM_1));
-            scoreBean.setTotalPoints(TeamId.TEAM_2,
-                    score.totalPoints(TeamId.TEAM_2));
+                    scoreBean.setTotalPoints(TeamId.TEAM_1, score.totalPoints(TeamId.TEAM_1));   
+                    scoreBean.setTotalPoints(TeamId.TEAM_2,  score.totalPoints(TeamId.TEAM_2));
 
-        });
+                });
     }
 
     /**
@@ -151,4 +132,6 @@ public final class GraphicalPlayerAdapter implements Player {
             scoreBean.setWinningTeam(winningTeam);
         });
     }
+
+
 }

@@ -89,7 +89,7 @@ public final class ScoreBean {
     public void setWinningTeam(TeamId winningTeam) {
         winningTeamProperty.set(winningTeam);
     }
-    //Initialize la map 
+    //Initialise la map 
     private  Map<TeamId , IntegerProperty>  initializeMap () {
         Map<TeamId , IntegerProperty>  map= new HashMap<>();
         for ( int i =0; i<TeamId.COUNT;i++) {
